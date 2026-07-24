@@ -12,24 +12,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # pnpm must be available before setup-node so its cache can find it.
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: pnpm
+          cache: yarn
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: yarn install --frozen-lockfile
 
       - name: Lint
-        run: pnpm lint
+        run: yarn lint
+
+      - name: Typecheck
+        run: yarn typecheck
 
       - name: Test
-        run: pnpm test
+        run: yarn test
 
       - name: Build
-        run: pnpm build
+        run: yarn build
