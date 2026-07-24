@@ -1,0 +1,38 @@
+name: Production
+
+on:
+  release:
+    types: [published]
+
+env:
+  DOMAIN: test-perfilamiento.${{ vars.DOMAIN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Install dependencies
+        run: yarn bootstrap
+
+      - name: Build
+        run: yarn build
+        env:
+          VITE_API_URL: https://api.sabbi.com
+
+      - name: Deploy On ${{ vars.DOMAIN }}
+        run: |
+          aws s3 sync dist/ s3://${{ env.DOMAIN }}
+        
