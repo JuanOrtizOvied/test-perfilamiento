@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  CertificateArn:
+    Description: Arn of certificate
+    Type: String
+  HostedZone:
+    Description: HostedZone
+    Type: String
+  DomainName:
+    Description: Domain Name
+    Type: String
+  HostedZoneId:
+    Description: HostedZoneId
+    Type: String
+
+Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref DomainName
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+    DeletionPolicy: Retain
+
+  BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    DependsOn: S3Bucket
+    Properties:
+      PolicyDocument:
+        Id: MyPolicy
+        Version: 2012-10-17
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket
+                - /*
+      Bucket: !Ref S3Bucket
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    DependsOn: BucketPolicy
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Join ['', [!Ref DomainName, '.s3.amazonaws.com']]
+            Id: !Join ['', [!Ref DomainName, '-s3-bucket']]
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+
+        DefaultCacheBehavior:
+          Compress: true
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - HEAD
+            - GET
+          MaxTTL: 60
+          MinTTL: 0
+          DefaultTTL: 0
+          ForwardedValues:
+            QueryString: false
+          TargetOriginId: !Join ['', [!Ref DomainName, '-s3-bucket']]
+        PriceClass: PriceClass_All
+        CNAMEs:
+          - !Ref DomainName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+        HttpVersion: http2
+        DefaultRootObject: index.html
+        Comment: !Ref DomainName
+        Aliases:
+          - !Ref DomainName
+        CustomErrorResponses:
+          - ErrorCachingMinTTL: 300
+            ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCachingMinTTL: 300
+            ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        Enabled: true
+      Tags:
+        - Key: Domain
+          Value: !Ref DomainName
+
+  Route53RecordSet:
+    Type: AWS::Route53::RecordSet
+    DependsOn: CloudFrontDistribution
+    Properties:
+      HostedZoneName: !Sub '${HostedZone}.'
+      Type: A
+      Name: !Sub '${DomainName}.'
+      AliasTarget:
+        DNSName: !GetAtt 'CloudFrontDistribution.DomainName'
+        EvaluateTargetHealth: true
+        HostedZoneId: !Ref HostedZoneId
+      Comment: "A record for '${DomainName}.'"
+
+Outputs:
+  WebsiteURL:
+    Value: !GetAtt 
+      - S3Bucket
+      - WebsiteURL
+    Description: URL for website hosted on S3
+
+  S3BucketSecureURL:
+    Value: !Join 
+      - ''
+      - - 'https://'
+        - !GetAtt 
+          - S3Bucket
+          - DomainName
+    Description: Name of S3 bucket to hold website content
+
+  CloudFrontDistribution:
+    Description: CloudFront distribution
+    Value: !GetAtt CloudFrontDistribution.DomainName
+
+  CloudFrontDomainName:
+    Description: Website address
+    Value: !Ref DomainName
