@@ -32,6 +32,7 @@ jobs:
       - name: Build
         run: yarn build
         env:
+          VITE_APP_ENV: production
           VITE_API_URL: https://api.sabbi.com
 
       - name: Deploy On ${{ vars.DOMAIN }}

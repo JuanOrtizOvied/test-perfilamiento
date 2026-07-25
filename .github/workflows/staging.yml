@@ -34,6 +34,7 @@ jobs:
       - name: Build
         run: yarn build
         env:
+          VITE_APP_ENV: staging
           VITE_API_URL: https://staging-api.sabbi.com
 
       - name: Deploy On ${{ vars.DOMAIN }}
