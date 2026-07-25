@@ -27,22 +27,23 @@ zod 4 · Vitest 4 (+ Testing Library / jsdom / MSW).
 
 ## Requisitos
 
-- **Node 24** — fijado en `.nvmrc` y en `engines` (`>=24 <25`). Con
-  `engine-strict=true` (`.npmrc`), `pnpm install` **falla** si tu Node está fuera
+- **Node 24** — fijado en `.nvmrc` y en `engines` (`>=24 <25`). Yarn Classic
+  valida `engines` por defecto: `yarn install` **falla** si tu Node está fuera
   de rango.
-- **pnpm 11** — es el gestor de paquetes del proyecto (`packageManager` fijado en
-  `package.json`). Se habilita con Corepack.
+- **Yarn 1 (Classic)** — es el gestor de paquetes del proyecto (`packageManager`
+  fijado en `package.json`). Se habilita con Corepack o `brew install yarn`.
 
 ## Instalación de librerías
 
 ```bash
 nvm use                  # usa Node 24 (lee .nvmrc)
-corepack enable pnpm     # habilita pnpm sin instalarlo a mano
-pnpm install             # instala todas las dependencias
+corepack enable yarn     # habilita yarn sin instalarlo a mano
+yarn install             # instala todas las dependencias
 ```
 
 > Si no usas nvm, asegúrate de tener Node 24 activo antes de instalar. Usa
-> **pnpm** (no `npm` ni `yarn`): el lockfile es `pnpm-lock.yaml`.
+> **yarn** (no `npm` ni `pnpm`): el lockfile es `yarn.lock`. Para reinstalar
+> desde cero usa `yarn bootstrap` (borra `node_modules` y vuelve a instalar).
 
 ## Variables de entorno
 
@@ -65,33 +66,37 @@ inválida una variable **requerida**, la app lanza un error ruidoso al iniciar.
 ## Inicializar el proyecto
 
 ```bash
-pnpm dev
+yarn dev
 ```
 
-Levanta el servidor de desarrollo de Vite en **http://localhost:5001** (con HMR).
-Es la forma normal de trabajar en local.
+Levanta el servidor de desarrollo de Vite en **http://localhost:5001** (con HMR;
+`--host` lo expone también en la red local). Es la forma normal de trabajar.
 
 Para un build de producción y previsualizarlo:
 
 ```bash
-pnpm build     # tsc -b (type-check estricto) + vite build → dist/
-pnpm preview   # sirve el build de dist/ localmente
+yarn build     # vite build → dist/
+yarn preview   # sirve el build de dist/ localmente
 ```
+
+> `yarn build` no typechequea: el type-check estricto vive en `yarn typecheck`
+> (y corre en CI).
 
 ## Scripts
 
-| Script               | Descripción                                       |
-| -------------------- | ------------------------------------------------- |
-| `pnpm dev`           | Servidor de desarrollo (Vite) en `:5001`          |
-| `pnpm build`         | `tsc -b && vite build` (type-check + bundle)      |
-| `pnpm preview`       | Sirve el build de producción                      |
-| `pnpm lint`          | ESLint (flat config, incluye `import-x/no-cycle`) |
-| `pnpm lint:fix`      | ESLint con `--fix`                                |
-| `pnpm format`        | Prettier (`--write`)                              |
-| `pnpm typecheck`     | `tsc -b` (solo type-check)                        |
-| `pnpm test`          | Vitest (una pasada)                               |
-| `pnpm test:watch`    | Vitest en modo watch                              |
-| `pnpm test:coverage` | Vitest con cobertura (v8)                         |
+| Script               | Descripción                                               |
+| -------------------- | --------------------------------------------------------- |
+| `yarn dev`           | Servidor de desarrollo (Vite) en `:5001`, con `--host`    |
+| `yarn build`         | Build de producción (`vite build`) → `dist/`              |
+| `yarn preview`       | Sirve el build de producción                              |
+| `yarn bootstrap`     | `rm -rf node_modules && yarn install` (desde cero)        |
+| `yarn lint`          | ESLint estricto (`--max-warnings 0`, `import-x/no-cycle`) |
+| `yarn lint:fix`      | ESLint con `--fix`                                        |
+| `yarn format`        | Prettier (`--write`)                                      |
+| `yarn typecheck`     | `tsc -b` (solo type-check)                                |
+| `yarn test`          | Vitest (una pasada)                                       |
+| `yarn test:watch`    | Vitest en modo watch                                      |
+| `yarn test:coverage` | Vitest con cobertura (v8)                                 |
 
 ## Testing
 
@@ -100,7 +105,7 @@ espejando su estructura). Las llamadas de red se simulan con **MSW** (solo en
 tests; en dev la app pega al backend real de `VITE_API_URL`).
 
 ```bash
-pnpm test
+yarn test
 ```
 
 ## Estructura
@@ -139,5 +144,6 @@ context-profile/            # documentación del sistema de perfilamiento
 
 ## CI
 
-`.github/workflows/ci.yml` corre **lint + test + build** con pnpm y Node 24 en
-cada push a `main` y en cada PR, sin credenciales ni servicios externos.
+`.github/workflows/ci.yml` corre **lint + typecheck + test + build** con yarn y
+Node 24 en cada push a `main` y en cada PR, sin credenciales ni servicios
+externos.

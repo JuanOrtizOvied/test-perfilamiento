@@ -1,6 +1,0 @@
-# pnpm settings (pnpm 11+). Allowlist for dependency build scripts.
-# - unrs-resolver: native import resolver used by ESLint (needs its build).
-# - msw: no build needed; the worker is generated via `pnpm exec msw init`.
-allowBuilds:
-  unrs-resolver: true
-  msw: false
