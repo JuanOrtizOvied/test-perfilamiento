@@ -99,12 +99,42 @@ describe('submitResult', () => {
     expect(spy).not.toHaveBeenCalled()
   })
 
-  it('posts no-cors JSON to the configured webhook', () => {
+  it('posts once, no-cors, to the configured webhook', () => {
     const spy = vi.spyOn(globalThis, 'fetch')
     submitResult(payload, PROFILE_TEST_WEBHOOK_URL)
+    expect(spy).toHaveBeenCalledTimes(1)
     expect(spy).toHaveBeenCalledWith(
       PROFILE_TEST_WEBHOOK_URL,
       expect.objectContaining({ method: 'POST', mode: 'no-cors' }),
     )
+  })
+
+  /**
+   * El cuerpo va form-encoded a propósito: en `no-cors` el navegador descarta
+   * cualquier header fuera de la lista segura de CORS, así que un
+   * `Content-Type: application/json` no llegaría nunca y el receptor vería el
+   * cuerpo como `text/plain`. Form-urlencoded sí sobrevive y además no dispara
+   * preflight, que es lo que mantiene el envío en una sola petición.
+   */
+  it('form-encodes the payload, so no header outside the CORS safelist is needed', () => {
+    const spy = vi.spyOn(globalThis, 'fetch')
+    submitResult(payload, PROFILE_TEST_WEBHOOK_URL)
+
+    const init = spy.mock.calls[0][1]!
+    expect(init.headers).toBeUndefined()
+    expect(init.body).toBeInstanceOf(URLSearchParams)
+
+    const body = init.body as URLSearchParams
+    expect(body.get('nombre')).toBe('Ana')
+    expect(body.get('correo')).toBe('ana@correo.com')
+    expect(body.get('arquetipo_nombre')).toBe('El Guardián')
+    expect(body.get('tipos_activos')).toBe(
+      'Acciones en bolsa | Bonos o renta fija',
+    )
+    // Los numéricos viajan como texto, como en cualquier form-encoding.
+    expect(body.get('E_score')).toBe('5')
+    expect(body.get('CAP_score')).toBe('2')
+    // Todos los campos del payload llegan, ninguno se pierde.
+    expect([...body.keys()]).toHaveLength(Object.keys(payload).length)
   })
 })

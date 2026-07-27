@@ -2,7 +2,8 @@
  * Result submission, ported from the original `getResp` + `sendToSheets`.
  * `buildResultPayload` assembles the ~50-field payload with verbatim field names
  * (Spanish, matching the original spreadsheet columns). `submitResult` posts it
- * fire-and-forget with `mode: 'no-cors'`, exactly like the original `fetch`.
+ * fire-and-forget with `mode: 'no-cors'`, like the original `fetch`, but
+ * form-encoded rather than as a JSON body — see `submitResult` for why.
  *
  * The endpoint comes from `VITE_PROFILE_TEST_WEBHOOK_URL` (Phase 1 directive)
  * instead of the original hardcoded Zapier URL. An empty / placeholder URL skips
@@ -79,16 +80,26 @@ export function buildResultPayload({
  * webhook URL is configured (or it still contains the `TU_URL` placeholder),
  * matching the original guard. `url` defaults to the configured env var; it is a
  * parameter so tests can exercise both the guard and the request.
+ *
+ * The body is form-encoded, NOT JSON. Under `mode: 'no-cors'` the browser strips
+ * every request header outside the CORS-safelist, so the original's
+ * `Content-Type: application/json` never reached the wire: the body arrived as
+ * `text/plain`, which Zapier (the original receiver) parsed anyway but n8n
+ * discards, leaving an empty payload. `application/x-www-form-urlencoded` IS
+ * safelisted, so it survives, triggers no preflight — keeping this a single
+ * request — and the receiver parses the fields natively. The payload shape and
+ * its verbatim field names are unchanged; only the encoding is.
  */
 export function submitResult(
   payload: ResultPayload,
   url: string = env.profileTestWebhookUrl,
 ): void {
   if (!url || url.includes('TU_URL')) return
-  void fetch(url, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  }).catch(() => {})
+  const form = new URLSearchParams()
+  for (const [field, value] of Object.entries(payload)) {
+    form.set(field, String(value))
+  }
+  void fetch(url, { method: 'POST', mode: 'no-cors', body: form }).catch(
+    () => {},
+  )
 }
