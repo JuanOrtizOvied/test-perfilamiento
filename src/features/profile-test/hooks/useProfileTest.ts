@@ -20,10 +20,8 @@ import {
   saveProgress,
   clearProgress,
 } from '@/features/profile-test/utils/savedProgress'
-import {
-  buildResultPayload,
-  submitResult,
-} from '@/features/profile-test/api/submitResult'
+import { buildProgressPayload } from '@/features/profile-test/api/submitProgress'
+import { submitResult } from '@/features/profile-test/api/submitResult'
 import {
   reducer,
   createInitialState,
@@ -42,22 +40,17 @@ export function useProfileTest(): UseProfileTest {
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Submit the result once, on the transition into the result view. Covers both
-  // original call sites (dismissInterm(33) and the final advance).
+  // original call sites (dismissInterm(33) and the final advance). Va el mismo
+  // snapshot que recibe el backend propio, ya en estado `completed`.
   useEffect(() => {
     if (state.result && !submittedRef.current) {
       submittedRef.current = true
       if (state.lastArq && state.lastCap) {
-        submitResult(
-          buildResultPayload({
-            answers: state.resp,
-            scores: state.scores,
-            result: { archetype: state.lastArq, capacity: state.lastCap },
-          }),
-        )
+        submitResult(buildProgressPayload(state))
       }
     }
     if (!state.result) submittedRef.current = false
-  }, [state.result, state.resp, state.scores, state.lastArq, state.lastCap])
+  }, [state])
 
   // Persist every meaningful change so a returning visitor can resume. The
   // pristine welcome (nothing answered) is not worth saving — skipping it also

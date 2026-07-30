@@ -5,6 +5,10 @@
  * apellido capturado dentro del formulario personal (no tiene Question propia),
  * resuelto por el fallback de `answerText`.
  *
+ * `title` es el nombre visible de la sección; coincide con el `bloque` de sus
+ * preguntas en `questions.ts` y se declara aquí porque `Q0_ap` no tiene Question
+ * de donde leerlo.
+ *
  * Es el contrato de cable con el backend — mantener en sync con `questions.ts`.
  * `api/submitProgress.ts` solo lo itera.
  */
@@ -13,7 +17,9 @@ import type { ProgressSection } from '@/core'
 export const PROGRESS_SCHEMA: readonly ProgressSection[] = [
   {
     key: 'personal',
+    title: 'Datos personales',
     commitGate: 'Q02',
+    plainFields: true,
     questions: [
       { id: 'Q0', key: 'name' },
       { id: 'Q0_ap', key: 'lastName' },
@@ -23,6 +29,7 @@ export const PROGRESS_SCHEMA: readonly ProgressSection[] = [
   },
   {
     key: 'objective',
+    title: 'Objetivo de inversión',
     questions: [
       { id: 'Q1', key: 'investmentGoal' },
       { id: 'Q2', key: 'timeHorizon' },
@@ -30,6 +37,7 @@ export const PROGRESS_SCHEMA: readonly ProgressSection[] = [
   },
   {
     key: 'experience',
+    title: 'Experiencia',
     questions: [
       { id: 'Q3', key: 'financeBackground' },
       { id: 'Q4', key: 'investingSince' },
@@ -39,6 +47,7 @@ export const PROGRESS_SCHEMA: readonly ProgressSection[] = [
   },
   {
     key: 'involvement',
+    title: 'Involucramiento',
     questions: [
       { id: 'Q7', key: 'decisionStyle' },
       { id: 'Q8', key: 'recommendationReaction' },
@@ -50,6 +59,7 @@ export const PROGRESS_SCHEMA: readonly ProgressSection[] = [
   },
   {
     key: 'risk',
+    title: 'Riesgo',
     questions: [
       { id: 'Q13', key: 'riskDisposition' },
       { id: 'Q14', key: 'maxTolerableDrop' },
@@ -59,6 +69,7 @@ export const PROGRESS_SCHEMA: readonly ProgressSection[] = [
   },
   {
     key: 'incomeFlows',
+    title: 'Flujos',
     questions: [
       { id: 'Q17', key: 'incomeImportance' },
       { id: 'Q18', key: 'monthlyIncomeNeeded' },
@@ -66,6 +77,7 @@ export const PROGRESS_SCHEMA: readonly ProgressSection[] = [
   },
   {
     key: 'financialCapacity',
+    title: 'Capacidad financiera',
     questions: [
       { id: 'Q19', key: 'ageRange' },
       { id: 'Q20', key: 'childrenUnder15' },
@@ -80,10 +92,12 @@ export const PROGRESS_SCHEMA: readonly ProgressSection[] = [
   },
   {
     key: 'peruContext',
+    title: 'Contexto Perú',
     questions: [{ id: 'Q28', key: 'peruStance' }],
   },
   {
     key: 'trust',
+    title: 'Confianza',
     questions: [
       { id: 'Q29', key: 'howFoundSabbi' },
       { id: 'Q30', key: 'delegationComfort' },

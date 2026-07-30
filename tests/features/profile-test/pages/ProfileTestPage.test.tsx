@@ -31,6 +31,25 @@ function payloads(): ProgressPayload[] {
   return registerApi.mock.calls.map((call) => call[0] as ProgressPayload)
 }
 
+/**
+ * Respuesta de una pregunta dentro del snapshot, buscándola por sección. Las
+ * preguntas con opciones la traen como lista; los campos del bloque personal,
+ * como texto.
+ */
+function answerOf(
+  payload: ProgressPayload,
+  sectionKey: string,
+  questionKey: string,
+): string | string[] {
+  const section = payload.sections.find(
+    (candidate) => candidate.key === sectionKey,
+  )
+  return (
+    section?.questions.find((question) => question.key === questionKey)
+      ?.answer ?? []
+  )
+}
+
 describe('ProfileTestPage — registro de respuestas', () => {
   it('registra una vez al confirmar el bloque personal (captura del lead)', async () => {
     const user = userEvent.setup()
@@ -54,10 +73,8 @@ describe('ProfileTestPage — registro de respuestas', () => {
     expect(registerApi).toHaveBeenCalledTimes(1)
     const [payload] = payloads()
     expect(payload).toMatchObject({ milestone: 'phone', status: 'in_progress' })
-    expect(payload.sections.personal).toMatchObject({
-      name: 'Ana María',
-      email: 'ana@correo.com',
-    })
+    expect(answerOf(payload, 'personal', 'name')).toBe('Ana María')
+    expect(answerOf(payload, 'personal', 'email')).toBe('ana@correo.com')
   })
 
   it('la selección múltiple se retiene hasta Continuar; el intermedio no re-registra', async () => {
@@ -105,9 +122,9 @@ describe('ProfileTestPage — registro de respuestas', () => {
     expect(registerApi).toHaveBeenCalledTimes(1)
     const answered = payloads()[0]
     expect(answered.sessionId).toBe(resumed.sessionId)
-    expect(answered.sections.experience.assetTypes).toBe(
+    expect(answerOf(answered, 'experience', 'assetTypes')).toEqual([
       QUESTIONS[8].opts![0].label,
-    )
+    ])
 
     // Salir del intermedio no cambia el contenido: no vuelve a registrar.
     await user.click(screen.getByRole('button', { name: nav.next }))

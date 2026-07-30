@@ -12,7 +12,10 @@ import { SendEmailDialog } from '@/features/profile-test/organisms/SendEmailDial
 import { useProfileTest } from '@/features/profile-test/hooks/useProfileTest'
 import { useResultActions } from '@/features/profile-test/hooks/useResultActions'
 import useRegisterSabbiTestQuestion from '@/features/profile-test/hooks/useRegisterSabbiTestQuestion'
-import { buildProgressPayload } from '@/features/profile-test/api/submitProgress'
+import {
+  buildProgressPayload,
+  hasAnswers,
+} from '@/features/profile-test/api/submitProgress'
 import {
   header,
   progress as progressCopy,
@@ -108,8 +111,7 @@ export function ProfileTestPage() {
     if (view === 'question' && question.tipo === 'multi') return
 
     const payload = buildProgressPayload(state)
-    const nothingToSend =
-      !state.result && Object.keys(payload.sections).length === 0
+    const nothingToSend = !state.result && !hasAnswers(payload)
     if (nothingToSend) return
 
     const signature = progressSignature(payload)
