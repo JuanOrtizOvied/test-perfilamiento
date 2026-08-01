@@ -56,6 +56,25 @@ function optionKey(index: number): string {
 }
 
 /**
+ * Índice de la opción que Q2 tiene por contestada cuando el objetivo la salta,
+ * o `undefined` si Q2 sigue en el recorrido.
+ *
+ * Elegir "crecer a largo plazo" ES contestar el horizonte — por eso el test no
+ * lo vuelve a preguntar (`skipQ2`) —, así que Q2 se serializa con esa opción y
+ * viaja como cualquier otra respuesta. Se deriva de las respuestas, no del
+ * `skipQ2` del estado, para que el payload sea coherente con lo que Q1 dice
+ * AHORA: si el usuario vuelve atrás y cambia el objetivo, esto lo sigue.
+ */
+function skippedQ2Answer(answers: Answers): number | undefined {
+  const [chosen] = answerOptionIndexes('Q1', answers)
+  const option =
+    chosen === undefined
+      ? undefined
+      : QUESTIONS.find((candidate) => candidate.id === 'Q1')?.opts?.[chosen]
+  return option?.skipQ2 ? option.skipQ2Answer : undefined
+}
+
+/**
  * Serializa una pregunta con su catálogo de opciones completo y lo elegido.
  * `answer` lleva las etiquetas y `answerKeys` las claves equivalentes, para que
  * el receptor sepa qué opción fue sin comparar el texto entero.
@@ -63,6 +82,12 @@ function optionKey(index: number): string {
  * `answered` viene de la sección: mientras su `commitGate` no esté contestado,
  * la pregunta viaja con la respuesta vacía aunque el estado ya tenga un valor
  * (evita registrar datos de contacto a medio escribir).
+ *
+ * El par `levels`/`answerLevels` solo se agrega si alguna opción declara
+ * `level` (hoy Q2): en las demás preguntas las claves ni siquiera aparecen.
+ *
+ * Q2 saltada no es un caso aparte en el payload: se serializa con la opción que
+ * su objetivo dejó fijada, así que llega con label, clave y nivel como el resto.
  */
 function buildQuestion(
   { id, key }: { id: string; key: string },
@@ -72,9 +97,21 @@ function buildQuestion(
   const question = QUESTIONS.find((candidate) => candidate.id === id)
   const options = question?.opts ?? []
   const opciones: Record<string, string> = {}
+  const levels: Record<string, string> = {}
   options.forEach((option, index) => {
     opciones[optionKey(index)] = option.label
+    if (option.level !== undefined) levels[optionKey(index)] = option.level
   })
+  const hasLevels = Object.keys(levels).length > 0
+  // Saltada: manda la opción implícita y no lo que hubiera guardado. Si contestó
+  // Q2 y luego volvió atrás a cambiar el objetivo, esa respuesta ya no aplica.
+  const implied = id === 'Q2' ? skippedQ2Answer(answers) : undefined
+  const chosen =
+    implied !== undefined
+      ? [implied]
+      : answered
+        ? answerOptionIndexes(id, answers)
+        : []
 
   return {
     id,
@@ -85,8 +122,19 @@ function buildQuestion(
     type: question?.tipo ?? 'personal',
     question: question?.texto ?? key,
     opciones,
-    answer: answered ? answerLabels(id, answers) : [],
-    answerKeys: answered ? answerOptionIndexes(id, answers).map(optionKey) : [],
+    ...(hasLevels && { levels }),
+    answer:
+      implied !== undefined
+        ? [options[implied].label]
+        : answered
+          ? answerLabels(id, answers)
+          : [],
+    answerKeys: chosen.map(optionKey),
+    ...(hasLevels && {
+      answerLevels: chosen
+        .map((index) => options[index].level)
+        .filter((level): level is string => level !== undefined),
+    }),
   }
 }
 
@@ -156,6 +204,7 @@ function buildProgressResult(state: TestState): ProgressResult {
       description: resolved ? (archetype?.description ?? '') : '',
       strengths: resolved ? [...(archetype?.strengths ?? [])] : [],
       blindSpots: resolved ? [...(archetype?.blindSpots ?? [])] : [],
+      imageUrl: resolved ? (archetype?.imageUrl ?? '') : '',
     },
     capacity: {
       id: resolved ? (state.lastCap ?? '') : '',

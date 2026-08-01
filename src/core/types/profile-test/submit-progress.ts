@@ -19,6 +19,10 @@ export interface ProgressSection {
  * (`opcion1`, `opcion2`, …) y lo elegido. `answer` y `answerKeys` son siempre
  * listas — una entrada en las de selección única, varias en las múltiples,
  * ninguna mientras no se conteste.
+ *
+ * `levels`/`answerLevels` son el par opcional: viajan SOLO en las preguntas
+ * cuyas opciones declaran `level` (hoy únicamente Q2, el horizonte temporal).
+ * En las demás los campos se omiten, así que la forma del resto no cambia.
  */
 export interface ProgressQuestion {
   id: string
@@ -26,8 +30,12 @@ export interface ProgressQuestion {
   type: QuestionType
   question: string
   opciones: Record<string, string>
+  /** Nivel de cada opción, bajo las mismas claves que `opciones`. */
+  levels?: Record<string, string>
   answer: string[]
   answerKeys: string[]
+  /** Nivel de lo elegido, alineado con `answer`/`answerKeys`. */
+  answerLevels?: string[]
 }
 
 /**
@@ -66,6 +74,8 @@ export interface ProgressResult {
     description: string
     strengths: string[]
     blindSpots: string[]
+    /** Hero del arquetipo en S3, la misma que muestra `ResultCard`. */
+    imageUrl: string
   }
   capacity: { id: string; label: string; portfolio: string }
   scores: ProgressScores

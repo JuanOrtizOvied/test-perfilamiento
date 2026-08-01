@@ -47,6 +47,10 @@ export const QUESTIONS: readonly Question[] = [
         riskPoints: 2,
         financialCapacityPoints: 10,
         skipQ2: true,
+        // Saltar Q2 no borra el horizonte: lo fija. Los 10 puntos de capacidad
+        // de esta opción son los mismos que da "Más de 15 años" en Q2 (índice
+        // 4), así que el salto ya está pre-otorgando ese tramo.
+        skipQ2Answer: 4,
       },
       { label: 'Planificar tus ahorros para jubilarte' },
       {
@@ -62,11 +66,31 @@ export const QUESTIONS: readonly Question[] = [
     condicional: true,
     texto: '¿En cuánto tiempo esperas alcanzar ese objetivo?',
     opts: [
-      { label: 'Menos de 2 años', financialCapacityPoints: 0 },
-      { label: 'Entre 2 y 5 años', financialCapacityPoints: 2 },
-      { label: 'Entre 5 y 8 años', financialCapacityPoints: 4 },
-      { label: 'Entre 8 y 15 años', financialCapacityPoints: 6 },
-      { label: 'Más de 15 años', financialCapacityPoints: 10 },
+      {
+        label: 'Menos de 2 años',
+        financialCapacityPoints: 0,
+        level: 'Ultra Corto Plazo',
+      },
+      {
+        label: 'Entre 2 y 5 años',
+        financialCapacityPoints: 2,
+        level: 'Corto Plazo',
+      },
+      {
+        label: 'Entre 5 y 8 años',
+        financialCapacityPoints: 4,
+        level: 'Mediano Plazo',
+      },
+      {
+        label: 'Entre 8 y 15 años',
+        financialCapacityPoints: 6,
+        level: 'Largo Plazo',
+      },
+      {
+        label: 'Más de 15 años',
+        financialCapacityPoints: 10,
+        level: 'Largo Plazo',
+      },
     ],
   },
   {

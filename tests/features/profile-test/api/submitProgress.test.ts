@@ -151,6 +151,76 @@ describe('buildSections', () => {
     expect(Object.keys(peru.opciones)).toHaveLength(4)
   })
 
+  it('carries the level catalog only on the questions that declare one', () => {
+    const horizon = questionOf(payload, 'objective', 'timeHorizon')
+    expect(horizon.id).toBe('Q2')
+    expect(horizon.levels).toEqual({
+      opcion1: 'Ultra Corto Plazo',
+      opcion2: 'Corto Plazo',
+      opcion3: 'Mediano Plazo',
+      opcion4: 'Largo Plazo',
+      opcion5: 'Largo Plazo',
+    })
+    // Sin llegar a la pregunta: el catálogo va, lo elegido vacío.
+    const untouched = questionOf(
+      buildProgressPayload(personalDone()),
+      'objective',
+      'timeHorizon',
+    )
+    expect(untouched.answerLevels).toEqual([])
+
+    // Cualquier otra pregunta ni siquiera lleva las claves.
+    const goal = questionOf(payload, 'objective', 'investmentGoal')
+    expect(goal).not.toHaveProperty('levels')
+    expect(goal).not.toHaveProperty('answerLevels')
+  })
+
+  it('reports the level of the chosen horizon alongside its label', () => {
+    const answered = buildProgressPayload({
+      ...personalDone(),
+      resp: { ...personalDone().resp, Q2: 2 },
+    })
+    const horizon = questionOf(answered, 'objective', 'timeHorizon')
+    expect(horizon.answer).toEqual(['Entre 5 y 8 años'])
+    expect(horizon.answerKeys).toEqual(['opcion3'])
+    expect(horizon.answerLevels).toEqual(['Mediano Plazo'])
+  })
+
+  it('answers Q2 with the horizon its objective fixed, when it is skipped', () => {
+    // Q1 opcion2 ("crecer a largo plazo") salta Q2: el horizonte ya quedó dicho.
+    const skipped = buildProgressPayload({
+      ...personalDone(),
+      resp: { ...personalDone().resp, Q1: 1 },
+    })
+    const horizon = questionOf(skipped, 'objective', 'timeHorizon')
+    // Llega como cualquier otra respuesta: sin banderas ni campos aparte.
+    expect(horizon.answer).toEqual(['Más de 15 años'])
+    expect(horizon.answerKeys).toEqual(['opcion5'])
+    expect(horizon.answerLevels).toEqual(['Largo Plazo'])
+  })
+
+  it('drops a stale Q2 answer when the objective changes to one that skips it', () => {
+    // Contestó Q2, volvió atrás y cambió el objetivo: la respuesta ya no aplica.
+    const changed = buildProgressPayload({
+      ...personalDone(),
+      resp: { ...personalDone().resp, Q1: 1, Q2: 0 },
+    })
+    const horizon = questionOf(changed, 'objective', 'timeHorizon')
+    expect(horizon.answer).toEqual(['Más de 15 años'])
+    expect(horizon.answerLevels).toEqual(['Largo Plazo'])
+  })
+
+  it('leaves Q2 answerable when the objective does not skip it', () => {
+    const kept = buildProgressPayload({
+      ...personalDone(),
+      resp: { ...personalDone().resp, Q1: 0, Q2: 0 },
+    })
+    const horizon = questionOf(kept, 'objective', 'timeHorizon')
+    expect(horizon.answer).toEqual(['Menos de 2 años'])
+    expect(horizon.answerKeys).toEqual(['opcion1'])
+    expect(horizon.answerLevels).toEqual(['Ultra Corto Plazo'])
+  })
+
   it('empties an empty multi-select answer', () => {
     const emptied = buildProgressPayload({
       ...personalDone(),
@@ -189,6 +259,7 @@ describe('buildProgressPayload', () => {
       description: '',
       strengths: [],
       blindSpots: [],
+      imageUrl: '',
     })
     expect(payload.result.capacity).toEqual({
       id: '',
@@ -221,6 +292,8 @@ describe('buildProgressPayload', () => {
       id: 'A3',
       name: 'El Aprendiz Activo',
       tier: 'Colaboradores',
+      imageUrl:
+        'https://sabbi-media.s3.us-east-1.amazonaws.com/arquetipos/A3.png',
     })
     expect(payload.result.archetype.strengths).toHaveLength(2)
     expect(payload.result.capacity.id).toBe('C3')

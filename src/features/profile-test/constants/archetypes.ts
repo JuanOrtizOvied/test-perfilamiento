@@ -13,8 +13,7 @@
 import type { Archetype } from '@/core'
 
 /** Remote hero images: `${HERO_IMAGE_BASE_URL}/<id>.png` per archetype id. */
-const HERO_IMAGE_BASE_URL =
-  'https://sabbi-media.s3.us-east-1.amazonaws.com/arquetipos'
+const HERO_IMAGE_BASE_URL = 'https://sabbi-media.s3.amazonaws.com/arquetipos'
 
 const ARCHETYPE_TEXT: Record<string, Omit<Archetype, 'imageUrl'>> = {
   A1: {
