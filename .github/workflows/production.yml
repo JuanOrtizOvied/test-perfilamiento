@@ -34,6 +34,7 @@ jobs:
         env:
           VITE_APP_ENV: production
           VITE_API_URL: https://api.sabbi.com
+          VITE_PROFILE_TEST_WEBHOOK_URL: ${{ secrets.VITE_PROFILE_TEST_WEBHOOK_URL }}
 
       - name: Deploy On ${{ vars.DOMAIN }}
         run: |
