@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { submitResult } from '@/features/profile-test/api/submitResult'
+import {
+  submitResult,
+  submitResultToExcel,
+} from '@/features/profile-test/api/submitResult'
 import { buildProgressPayload } from '@/features/profile-test/api/submitProgress'
 import { createInitialState } from '@/features/profile-test/hooks/profileTestReducer'
-import { PROFILE_TEST_WEBHOOK_URL } from '@tests/msw/handlers'
+import {
+  PROFILE_TEST_WEBHOOK_URL,
+  PROFILE_TEST_EXCEL_WEBHOOK_URL,
+} from '@tests/msw/handlers'
 import type { ProgressPayload, TestState } from '@/core'
 
 const finished: TestState = {
@@ -100,11 +106,48 @@ describe('submitResult', () => {
     expect(body.result.capacity.portfolio).toContain(
       'Mercados Públicos - Fijo 34-44%',
     )
+    // El tramo viaja por nombre en `id`, no como `C1`.
+    expect(body.result.capacity.id).toBe('Conservador')
     expect(body.result.scores).toMatchObject({
       E_score: 5,
       CAP_score: 2,
       COLAB: 1,
       CONF: 3,
     })
+  })
+})
+
+/**
+ * El webhook de Excel es el mismo envío contra otra URL: mismas guardas, mismo
+ * cuerpo, mismo `Content-Type`. Lo único que cambia es el destino, porque del
+ * otro lado el procedimiento (volcar las preguntas a una hoja) es distinto.
+ */
+describe('submitResultToExcel', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('skips the request when no webhook URL is configured', () => {
+    const spy = vi.spyOn(globalThis, 'fetch')
+    submitResultToExcel(payload, '')
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('skips the request for a TU_URL placeholder', () => {
+    const spy = vi.spyOn(globalThis, 'fetch')
+    submitResultToExcel(payload, 'https://example.com/TU_URL')
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('posts the same body as the result webhook, to its own URL', () => {
+    const spy = vi.spyOn(globalThis, 'fetch')
+    submitResult(payload, PROFILE_TEST_WEBHOOK_URL)
+    submitResultToExcel(payload, PROFILE_TEST_EXCEL_WEBHOOK_URL)
+
+    expect(spy).toHaveBeenCalledTimes(2)
+    expect(spy.mock.calls[1][0]).toBe(PROFILE_TEST_EXCEL_WEBHOOK_URL)
+    expect(spy.mock.calls[1][1]).toMatchObject({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    expect(spy.mock.calls[1][1]!.body).toBe(spy.mock.calls[0][1]!.body)
   })
 })

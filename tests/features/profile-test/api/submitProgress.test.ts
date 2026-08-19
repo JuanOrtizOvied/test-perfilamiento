@@ -292,11 +292,11 @@ describe('buildProgressPayload', () => {
       id: 'A3',
       name: 'El Aprendiz Activo',
       tier: 'Colaboradores',
-      imageUrl:
-        'https://sabbi-media.s3.us-east-1.amazonaws.com/arquetipos/A3.png',
+      imageUrl: 'https://sabbi-media.s3.amazonaws.com/arquetipos/A3.png',
     })
     expect(payload.result.archetype.strengths).toHaveLength(2)
-    expect(payload.result.capacity.id).toBe('C3')
+    // `id` lleva el nombre del tramo, no el código `C3`.
+    expect(payload.result.capacity.id).toBe('Moderado')
     expect(payload.result.capacity.label).toBe('Capacidad 3')
     expect(payload.result.capacity.portfolio).toContain('%')
     // CAP_score va ya ajustado: C8_gap = 0-1 = -1 (sin penalidad) y sin deuda.

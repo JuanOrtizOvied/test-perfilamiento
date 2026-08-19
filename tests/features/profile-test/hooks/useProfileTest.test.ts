@@ -13,19 +13,23 @@ import {
   STORAGE_KEY,
 } from '@/features/profile-test/utils/savedProgress'
 import { QUESTIONS } from '@/features/profile-test/constants/questions'
-import { submitResult } from '@/features/profile-test/api/submitResult'
+import {
+  submitResult,
+  submitResultToExcel,
+} from '@/features/profile-test/api/submitResult'
 
 vi.mock('@/features/profile-test/api/submitResult', async (importOriginal) => {
   const original =
     await importOriginal<
       typeof import('@/features/profile-test/api/submitResult')
     >()
-  return { ...original, submitResult: vi.fn() }
+  return { ...original, submitResult: vi.fn(), submitResultToExcel: vi.fn() }
 })
 
 beforeEach(() => {
   localStorage.clear()
   vi.mocked(submitResult).mockClear()
+  vi.mocked(submitResultToExcel).mockClear()
 })
 
 /** Fold a sequence of actions over a starting state. */
@@ -328,6 +332,7 @@ describe('saved progress (localStorage)', () => {
     act(() => hook.result.current.actions.resume())
     expect(hook.result.current.view).toBe('result')
     expect(submitResult).not.toHaveBeenCalled()
+    expect(submitResultToExcel).not.toHaveBeenCalled()
   })
 
   it('finishing a resumed run submits once, and its save restores to the result', () => {
@@ -347,11 +352,17 @@ describe('saved progress (localStorage)', () => {
     act(() => first.result.current.actions.dismissIntermission())
     expect(first.result.current.view).toBe('result')
     expect(submitResult).toHaveBeenCalledTimes(1)
+    // El webhook de Excel recibe el mismo cuerpo, en el mismo momento.
+    expect(submitResultToExcel).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(submitResultToExcel).mock.calls[0][0]).toEqual(
+      vi.mocked(submitResult).mock.calls[0][0],
+    )
     first.unmount()
 
     const second = renderHook(() => useProfileTest())
     act(() => second.result.current.actions.resume())
     expect(second.result.current.view).toBe('result')
     expect(submitResult).toHaveBeenCalledTimes(1)
+    expect(submitResultToExcel).toHaveBeenCalledTimes(1)
   })
 })

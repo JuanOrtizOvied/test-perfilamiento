@@ -42,6 +42,7 @@ export const CAPACITIES: Record<string, Capacity> = {
   C1: {
     id: 'C1',
     label: 'Capacidad 1',
+    level: 'Conservador',
     range: '< 3',
     description:
       'Insuficiente para asumir pérdidas. 100% preservación, liquidez alta, flujos seguros. Prohibido todo producto ilíquido.',
@@ -50,6 +51,7 @@ export const CAPACITIES: Record<string, Capacity> = {
   C2: {
     id: 'C2',
     label: 'Capacidad 2',
+    level: 'Conservador & Moderado',
     range: '3 a 9',
     description:
       'Limitada. Mayormente conservador con ventana de riesgo medio. Alternativos líquidos institucionales.',
@@ -58,6 +60,7 @@ export const CAPACITIES: Record<string, Capacity> = {
   C3: {
     id: 'C3',
     label: 'Capacidad 3',
+    level: 'Moderado',
     range: '10 a 14',
     description:
       'Media. Exposición moderada a alto riesgo. Alternativos líquidos más pequeña posición ilíquida.',
@@ -66,6 +69,7 @@ export const CAPACITIES: Record<string, Capacity> = {
   C4: {
     id: 'C4',
     label: 'Capacidad 4',
+    level: 'Moderado & Arriesgado',
     range: '15 a 20',
     description:
       'Alta. Crecimiento, alternativos líquidos e ilíquidos. Acceso amplio al catálogo.',
@@ -74,6 +78,7 @@ export const CAPACITIES: Record<string, Capacity> = {
   C5: {
     id: 'C5',
     label: 'Capacidad 5',
+    level: 'Arriesgado',
     range: '> 20',
     description:
       'Muy alta. Acceso completo incluyendo venture, deal flow exclusivo, PE ilíquido.',

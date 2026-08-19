@@ -21,7 +21,10 @@ import {
   clearProgress,
 } from '@/features/profile-test/utils/savedProgress'
 import { buildProgressPayload } from '@/features/profile-test/api/submitProgress'
-import { submitResult } from '@/features/profile-test/api/submitResult'
+import {
+  submitResult,
+  submitResultToExcel,
+} from '@/features/profile-test/api/submitResult'
 import {
   reducer,
   createInitialState,
@@ -41,12 +44,15 @@ export function useProfileTest(): UseProfileTest {
 
   // Submit the result once, on the transition into the result view. Covers both
   // original call sites (dismissInterm(33) and the final advance). Va el mismo
-  // snapshot que recibe el backend propio, ya en estado `completed`.
+  // snapshot que recibe el backend propio, ya en estado `completed`, a los dos
+  // webhooks: el del resultado y el que vuelca las preguntas a un Excel.
   useEffect(() => {
     if (state.result && !submittedRef.current) {
       submittedRef.current = true
       if (state.lastArq && state.lastCap) {
-        submitResult(buildProgressPayload(state))
+        const payload = buildProgressPayload(state)
+        submitResult(payload)
+        submitResultToExcel(payload)
       }
     }
     if (!state.result) submittedRef.current = false

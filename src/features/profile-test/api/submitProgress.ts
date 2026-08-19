@@ -207,7 +207,8 @@ function buildProgressResult(state: TestState): ProgressResult {
       imageUrl: resolved ? (archetype?.imageUrl ?? '') : '',
     },
     capacity: {
-      id: resolved ? (state.lastCap ?? '') : '',
+      // `id` lleva el nombre del tramo, no `C1…C5` (decisión 2026-08-19).
+      id: resolved ? (capacity?.level ?? '') : '',
       label: resolved ? (capacity?.label ?? '') : '',
       portfolio: resolved
         ? (capacity?.portfolio

@@ -5,9 +5,17 @@ import { http, HttpResponse } from 'msw'
 // defecto, así que el guard lo salta.
 export const PROFILE_TEST_WEBHOOK_URL = 'https://webhook.test/profile-sabbi'
 
+/** Segundo destino, mismo cuerpo: el webhook que vuelca las preguntas a Excel. */
+export const PROFILE_TEST_EXCEL_WEBHOOK_URL =
+  'https://webhook.test/profile-sabbi-excel'
+
 export const handlers = [
   http.post(
     PROFILE_TEST_WEBHOOK_URL,
+    async () => new HttpResponse(null, { status: 200 }),
+  ),
+  http.post(
+    PROFILE_TEST_EXCEL_WEBHOOK_URL,
     async () => new HttpResponse(null, { status: 200 }),
   ),
 ]

@@ -77,7 +77,16 @@ export interface ProgressResult {
     /** Hero del arquetipo en S3, la misma que muestra `ResultCard`. */
     imageUrl: string
   }
-  capacity: { id: string; label: string; portfolio: string }
+  capacity: {
+    /**
+     * Nombre del tramo ("Conservador", "Moderado"…), NO el código `C1…C5`: los
+     * consumidores leen el nivel directo, sin re-derivar las bandas de
+     * `CAP_score`. El código interno sigue viviendo en `state.lastCap`.
+     */
+    id: string
+    label: string
+    portfolio: string
+  }
   scores: ProgressScores
 }
 

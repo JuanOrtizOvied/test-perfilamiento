@@ -13,7 +13,7 @@ El resultado combina dos ejes:
 
 Además incluye pantallas intermedias con "recall" de respuestas previas, barra de
 progreso, **reanudar donde lo dejaste** (persistencia en `localStorage`), envío
-de _snapshots_ de avance al backend, envío del resultado a un webhook y
+de _snapshots_ de avance al backend, envío del resultado a dos webhooks y
 **descarga del resultado como imagen PNG**.
 
 > El motor de scoring (arquetipo + capacidad) está portado desde el HTML original
@@ -56,12 +56,13 @@ cp .env.example .env.local
 Se validan con **zod** al arrancar en `src/packages/config/env.ts`; si falta o es
 inválida una variable **requerida**, la app lanza un error ruidoso al iniciar.
 
-| Variable                        | Requerida | Descripción                                                              |
-| ------------------------------- | --------- | ------------------------------------------------------------------------ |
-| `VITE_APP_ENV`                  | sí        | Entorno: `local` \| `staging` \| `production`                            |
-| `VITE_API_URL`                  | sí        | URL base de la API (cliente axios + registro de avance). Debe ser válida |
-| `VITE_GA_ID`                    | no        | Measurement id de Google Analytics (vacío por defecto)                   |
-| `VITE_PROFILE_TEST_WEBHOOK_URL` | no        | Webhook del resultado final; si queda vacío, no se envía                 |
+| Variable                              | Requerida | Descripción                                                               |
+| ------------------------------------- | --------- | ------------------------------------------------------------------------- |
+| `VITE_APP_ENV`                        | sí        | Entorno: `local` \| `staging` \| `production`                             |
+| `VITE_API_URL`                        | sí        | URL base de la API (cliente axios + registro de avance). Debe ser válida  |
+| `VITE_GA_ID`                          | no        | Measurement id de Google Analytics (vacío por defecto)                    |
+| `VITE_PROFILE_TEST_WEBHOOK_URL`       | no        | Webhook del resultado final; si queda vacío, no se envía                  |
+| `VITE_PROFILE_TEST_EXCEL_WEBHOOK_URL` | no        | Webhook que vuelca las preguntas a un Excel; mismo cuerpo que el anterior |
 
 ## Inicializar el proyecto
 
