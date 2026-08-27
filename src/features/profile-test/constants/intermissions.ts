@@ -19,24 +19,27 @@ import type { Intermission } from '@/core'
  * `INTERMS[*].build`. Index 33 has no recall (its body is fully static).
  */
 export const recallCopy = {
+  // Sin chip de horizonte: la pantalla se queda con el objetivo. Q2 es
+  // saltable, así que el horizonte no siempre venía de una respuesta real.
   after4: {
     lead: 'Buscas',
-    horizon: ' y tu horizonte es ',
-    tail: '. Eso nos ayuda a entender qué tipo de estrategia podría hacer más sentido para ti.',
+    tail: ' y eso nos ayuda a entender qué tipo de estrategia podría hacer más sentido para ti.',
   },
   after8: { lead: 'Nos contaste que ', tail: '.' },
-  after14: { lead: 'Para ti sería más útil ', tail: '.' },
+  after14: { lead: 'Tomamos nota: para ti sería más útil ', tail: '.' },
   after20: {
     both: {
-      lead: 'Estás dispuesto/a a asumir un nivel de riesgo ',
-      mid: ' y necesitas recibir ',
+      lead: 'Ya sabemos que estás dispuesto/a a asumir un nivel de riesgo ',
+      // El verbo de Q18 vive en su propia etiqueta ("Necesitas entre…"), por eso
+      // el conector es solo " y ".
+      mid: ' en tus inversiones y ',
       tailBefore:
         ' de tus inversiones. Esto nos ayuda a determinar cuánto riesgo ',
       em: 'quieres',
       tailAfter: ' tomar.',
     },
     riskOnly: {
-      lead: 'Estás dispuesto/a a asumir un nivel de riesgo ',
+      lead: 'Ya sabemos que estás dispuesto/a a asumir un nivel de riesgo ',
       tailBefore:
         ' en tus inversiones. Esto nos ayuda a determinar cuánto riesgo ',
       em: 'quieres',
@@ -52,8 +55,8 @@ export const recallCopy = {
 export const INTERMISSIONS: readonly Intermission[] = [
   {
     // Recall intro (built by utils/recall.ts):
-    //   "Buscas <chip>{objetivo}</chip> y tu horizonte es <chip>{horizonte}</chip>.
-    //    Eso nos ayuda a entender qué tipo de estrategia podría hacer más sentido para ti."
+    //   "Buscas <chip>{objetivo}</chip> y eso nos ayuda a entender qué tipo de
+    //    estrategia podría hacer más sentido para ti."
     afterIndex: 4,
     badge: 'Objetivo',
     phase: 1,
@@ -82,7 +85,8 @@ export const INTERMISSIONS: readonly Intermission[] = [
     ],
   },
   {
-    // Recall intro (built by utils/recall.ts): "Para ti sería más útil <chip>{acompañamiento}</chip>."
+    // Recall intro (built by utils/recall.ts):
+    //   "Tomamos nota: para ti sería más útil <chip>{acompañamiento}</chip>."
     afterIndex: 14,
     badge: 'Involucramiento',
     phase: 3,
@@ -98,9 +102,9 @@ export const INTERMISSIONS: readonly Intermission[] = [
   },
   {
     // Recall intro (built by utils/recall.ts):
-    //   "Estás dispuesto/a a asumir un nivel de riesgo <chip>{riesgo}</chip> y necesitas
-    //    recibir <chip>{flujo}</chip> de tus inversiones. Esto nos ayuda a determinar
-    //    cuánto riesgo <em>quieres</em> tomar."
+    //   "Ya sabemos que estás dispuesto/a a asumir un nivel de riesgo <chip>{riesgo}</chip>
+    //    en tus inversiones y <chip>{flujo}</chip> de tus inversiones. Esto nos ayuda a
+    //    determinar cuánto riesgo <em>quieres</em> tomar."
     afterIndex: 20,
     badge: 'Flujos',
     phase: 4,
@@ -108,7 +112,7 @@ export const INTERMISSIONS: readonly Intermission[] = [
     body: [
       [
         {
-          text: 'Ahora haremos algunas preguntas sobre tu situación financiera actual. Esta sección nos ayuda a calcular tu capacidad de riesgo: el riesgo que ',
+          text: 'Ahora haremos algunas preguntas sobre tu situación financiera actual. Esta sección nos ayuda a calcular tu capacidad de riesgo, es decir, el riesgo que ',
         },
         { text: 'puedes', emphasis: 'em' },
         { text: ' tomar de acuerdo a tu situación.' },

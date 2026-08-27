@@ -13,12 +13,17 @@ import { QUESTIONS } from '@/features/profile-test/constants/questions'
 import { recallCopy } from '@/features/profile-test/constants/intermissions'
 import type { Answers, RecallSegment } from '@/core'
 
-/** Option label for a single-answer question id, or null if unanswered. */
+/**
+ * Texto de la opción elegida en una pregunta de respuesta única, o null si aún
+ * no se contesta. Prefiere `recallLabel` cuando existe: la etiqueta de Q15 trae
+ * una explicación tras el guion que no cabe dentro de la frase.
+ */
 function optionText(questionId: string, answers: Answers): string | null {
   const question = QUESTIONS.find((candidate) => candidate.id === questionId)
   const index = answers[questionId]
   if (!question || typeof index !== 'number') return null
-  return question.opts?.[index]?.label ?? null
+  const option = question.opts?.[index]
+  return option ? (option.recallLabel ?? option.label) : null
 }
 
 /** The intermissions that surface one answer chip between fixed lead/tail copy. */
@@ -36,21 +41,12 @@ function singleChipRecall(
   ]
 }
 
-/** Objective (Q1) plus an optional horizon (Q2, dropped when skipped). */
-function buildObjectiveRecall(
-  answers: Answers,
-  skipQ2: boolean,
-): RecallSegment[] {
+/** Solo el objetivo (Q1): el horizonte de Q2 ya no se recuerda acá. */
+function buildObjectiveRecall(answers: Answers): RecallSegment[] {
   const objective = optionText('Q1', answers)
-  const horizon = skipQ2 ? null : optionText('Q2', answers)
   const segments: RecallSegment[] = [{ text: recallCopy.after4.lead }]
   if (objective)
     segments.push({ text: ' ' }, { text: objective.toLowerCase(), chip: true })
-  if (horizon)
-    segments.push(
-      { text: recallCopy.after4.horizon },
-      { text: horizon.toLowerCase(), chip: true },
-    )
   segments.push({ text: recallCopy.after4.tail })
   return segments
 }
@@ -85,11 +81,10 @@ function buildRiskFlowRecall(answers: Answers): RecallSegment[] | null {
 export function buildRecall(
   afterIndex: number,
   answers: Answers,
-  skipQ2: boolean,
 ): RecallSegment[] | null {
   switch (afterIndex) {
     case 4:
-      return buildObjectiveRecall(answers, skipQ2)
+      return buildObjectiveRecall(answers)
     case 8:
       return singleChipRecall('Q5', answers, recallCopy.after8)
     case 14:

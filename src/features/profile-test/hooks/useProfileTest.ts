@@ -100,10 +100,8 @@ export function useProfileTest(): UseProfileTest {
 
   const recall = useMemo(
     () =>
-      state.interm !== null
-        ? buildRecall(state.interm, state.resp, state.skipQ2)
-        : null,
-    [state.interm, state.resp, state.skipQ2],
+      state.interm !== null ? buildRecall(state.interm, state.resp) : null,
+    [state.interm, state.resp],
   )
 
   const actions = useMemo<UseProfileTest['actions']>(

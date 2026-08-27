@@ -112,9 +112,9 @@ describe('buildSections', () => {
     expect(goal.opciones).toEqual({
       opcion1: 'Generar ingresos de tus inversiones para cubrir tus gastos',
       opcion2: 'Hacer crecer tu dinero a largo plazo',
-      opcion3: 'Planificar tus ahorros para jubilarte',
+      opcion3: 'Planificar tu jubilación',
       opcion4:
-        'Prepararte para un objetivo específico (comprar un departamento, educación de tus hijos u otro proyecto importante)',
+        'Prepararte para un objetivo específico (comprar un departamento, la educación de tus hijos u otro proyecto importante)',
     })
   })
 

@@ -60,7 +60,6 @@ export const personalForm = {
 export const result = {
   strengthsHeading: 'Fortalezas',
   blindSpotsHeading: 'Puntos ciegos',
-  portfolioHeading: 'Portafolio recomendado',
 } as const
 
 /** Tooltips for the result action bar buttons. */

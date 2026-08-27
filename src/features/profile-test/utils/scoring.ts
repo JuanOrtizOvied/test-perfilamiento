@@ -22,6 +22,7 @@ import {
 } from '@/features/profile-test/constants/scoring'
 import { COMBINATION_MATRIX } from '@/features/profile-test/constants/combinations'
 import type {
+  Answers,
   ArchetypeId,
   ArchetypeRule,
   ArchetypeScores,
@@ -187,6 +188,45 @@ export function resolveCapacity(scores: CapacityScores): ResolvedCapacity {
   }
 }
 
+// ── Estepario: condiciones por respuesta ────────────────────────────────────
+
+/**
+ * Índices de las opciones que marcan autonomía en cada pregunta del bloque de
+ * Estepario. El documento de contexto define la regla citando el TEXTO de la
+ * opción; acá se ancla al índice a propósito, porque ese texto es copy y se
+ * reescribe sin avisar (el propio documento lo cita en dos redacciones
+ * distintas).
+ *
+ *  - Q7  · "Investigas por tu cuenta y luego decides"
+ *  - Q12 · sin interés en la comunidad, o solo lectura pasiva
+ *  - Q30 · "No te sentirías cómodo/a, prefieres decidir directamente"
+ *  - Q31 · "No, nunca"
+ */
+const AUTONOMY_ANSWERS: Readonly<Record<string, readonly number[]>> = {
+  Q7: [2],
+  Q12: [0, 1],
+  Q30: [0],
+  Q31: [0],
+}
+
+/**
+ * Las cuatro condiciones que definen al Estepario: decide solo, no delega,
+ * nunca delegó y no quiere comunidad.
+ *
+ * Reemplazan al par `involvementScore > 9 && collaborationMarker <= 3` de la
+ * regla anterior, y son estrictamente más angostas: las opciones exigidas ya
+ * aportan I ≥ 12 por sí solas (Q7 +6 y Q30 +3) y topan COLAB en 3 (Q11 ≤ +2 más
+ * Q12 ≤ +1), así que ambas condiciones viejas se siguen cumpliendo de rebote.
+ * De ahí que nadie que no fuera Estepario pase a serlo — pero sí al revés, ver
+ * `FALLBACK_ARCHETYPE_ID`.
+ */
+export function isAutonomousProfile(answers: Answers): boolean {
+  return Object.entries(AUTONOMY_ANSWERS).every(([questionId, allowed]) => {
+    const answer = answers[questionId]
+    return typeof answer === 'number' && allowed.includes(answer)
+  })
+}
+
 // ── Archetype ───────────────────────────────────────────────────────────────
 
 /**
@@ -201,18 +241,14 @@ export const ARCHETYPE_RULES: readonly ArchetypeRule[] = [
   {
     id: 'A12P',
     description: 'Estepario Principiante',
-    matches: (scores) =>
-      scores.experienceScore <= 7.5 &&
-      scores.involvementScore > 9 &&
-      scores.collaborationMarker <= 3,
+    matches: (scores, answers) =>
+      scores.experienceScore <= 7.5 && isAutonomousProfile(answers),
   },
   {
     id: 'A12S',
     description: 'Estepario Sabio',
-    matches: (scores) =>
-      scores.experienceScore >= 7.6 &&
-      scores.involvementScore > 9 &&
-      scores.collaborationMarker <= 3,
+    matches: (scores, answers) =>
+      scores.experienceScore >= 7.6 && isAutonomousProfile(answers),
   },
   {
     id: 'A11',
@@ -315,11 +351,23 @@ export const ARCHETYPE_RULES: readonly ArchetypeRule[] = [
  * Archetype id used when no rule matches. Kept as `A2` for external
  * compatibility (the original chain ended in `else A2`), but the fallback is
  * flagged so callers can tell it apart from a direct A2 rule match.
+ *
+ * OJO: al angostar la regla de Estepario a cuatro respuestas puntuales, este
+ * fallback dejó de ser un caso de borde. Toda la región `E ≤ 7.5 && I > 9 &&
+ * COLAB ≤ 3` —y buena parte de la de arriba— ya no matchea ninguna regla:
+ * A3 exige COLAB ≥ 4 y A1/A2 exigen I ≤ 9. Es el comportamiento que pide el
+ * documento de contexto; queda documentado como riesgo abierto (P1 del
+ * análisis) y fijado en los tests, no parcheado acá.
  */
 export const FALLBACK_ARCHETYPE_ID: ArchetypeId = 'A2'
 
-export function resolveArchetype(scores: ArchetypeScores): ResolvedArchetype {
-  const matchedRule = ARCHETYPE_RULES.find((rule) => rule.matches(scores))
+export function resolveArchetype(
+  scores: ArchetypeScores,
+  answers: Answers,
+): ResolvedArchetype {
+  const matchedRule = ARCHETYPE_RULES.find((rule) =>
+    rule.matches(scores, answers),
+  )
   if (matchedRule)
     return {
       id: matchedRule.id,
@@ -346,10 +394,14 @@ export function resolveCombinationFit(
 // ── Derived internal levels ─────────────────────────────────────────────────
 //
 // Bands over the raw scores, exposed for internal use only (they are not part
-// of the visible result). Where the archetype rules imply breakpoints
-// (experience 7.5/11/13.5, involvement 9/13.1/17, risk 9/15/20) the bands reuse
-// them; trust and collaboration follow the scoring tables of the context
-// document (`context-profile/sistema-perfil-sabbi.md`).
+// of the visible result). Experience and involvement reuse los cortes que ya
+// implican las reglas (7.5/11/13.5 y 9/13.1/17); confianza y colaboratividad
+// siguen las tablas del documento de contexto.
+//
+// Riesgo es la excepción: pasó a cinco tramos con nombres unificados con
+// Capacidad, pero el documento dejó los umbrales DENTRO de las reglas intactos
+// (A1 R≤9, A8 R≤15, A9 R 16–20, A10 R≥21). Escala y reglas quedan por eso
+// desalineadas en los bordes — P5 del análisis, decisión del cliente.
 
 const EXPERIENCE_BANDS: readonly ScoreBand<ExperienceLevel>[] = [
   { max: 7.5, inclusive: true, level: 'basica' },
@@ -376,13 +428,14 @@ export function deriveInvolvementLevel(
 }
 
 const RISK_BANDS: readonly ScoreBand<RiskLevel>[] = [
-  { max: 9, inclusive: true, level: 'conservador' },
-  { max: 15, inclusive: true, level: 'moderado' },
-  { max: 20, inclusive: true, level: 'dinamico' },
+  { max: 7, inclusive: true, level: 'conservador' },
+  { max: 12, inclusive: true, level: 'conservador-moderado' },
+  { max: 16, inclusive: true, level: 'moderado' },
+  { max: 21, inclusive: true, level: 'moderado-arriesgado' },
 ]
 
 export function deriveRiskLevel(riskScore: number): RiskLevel {
-  return resolveBand(riskScore, RISK_BANDS, 'audaz')
+  return resolveBand(riskScore, RISK_BANDS, 'arriesgado')
 }
 
 const TRUST_BANDS: readonly ScoreBand<TrustLevel>[] = [
@@ -433,8 +486,9 @@ export function deriveLevels(scores: ScoreState): DerivedLevels {
  */
 export function resolveInvestorProfile(
   scores: ScoreState,
+  answers: Answers,
 ): InvestorProfileResult {
-  const archetypeDetails = resolveArchetype(scores)
+  const archetypeDetails = resolveArchetype(scores, answers)
   const capacityDetails = resolveCapacity(scores)
   return {
     archetype: archetypeDetails.id,
@@ -454,7 +508,10 @@ export function resolveInvestorProfile(
  * Convenience façade returning only the visible archetype + capacity ids
  * (port of `calcResult`'s return). Delegates to `resolveInvestorProfile`.
  */
-export function resolveResult(scores: ScoreState): ResolvedResult {
-  const profile = resolveInvestorProfile(scores)
+export function resolveResult(
+  scores: ScoreState,
+  answers: Answers,
+): ResolvedResult {
+  const profile = resolveInvestorProfile(scores, answers)
   return { archetype: profile.archetype, capacity: profile.capacity }
 }

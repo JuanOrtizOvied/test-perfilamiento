@@ -197,7 +197,7 @@ const ARCHETYPE_TEXT: Record<string, Omit<Archetype, 'imageUrl'>> = {
     name: 'El Estepario Principiante',
     tier: 'Esteparios',
     description:
-      'Está construyendo su camino como inversionista paso a paso, tomando sus propias decisiones sin delegarlas ni compartirlas. Prefiere aprender en silencio y avanzar con claridad antes de abrirse a otros.',
+      'Está construyendo su camino como inversionista paso a paso. Toma sus propias decisiones y prefiere apoyarse en información y análisis puntual antes que en la validación constante de otros. Aprende a su ritmo y va ganando confianza con cada decisión.',
     strengths: [
       'Toma decisiones propias con autonomía desde el inicio.',
       'Aprende a su ritmo sin dejarse llevar por el ruido externo.',
@@ -213,7 +213,7 @@ const ARCHETYPE_TEXT: Record<string, Omit<Archetype, 'imageUrl'>> = {
     name: 'El Estepario Sabio',
     tier: 'Esteparios',
     description:
-      'Tiene criterio consolidado y opera con plena autonomía. No necesita validación externa ni comunidad para tomar decisiones con convicción.',
+      'Tiene criterio consolidado y opera con alto nivel de autonomía. Puede apoyarse en asesoría puntual o en información especializada, pero no depende de la validación externa ni de la comunidad para tomar decisiones con convicción.',
     strengths: [
       'Ha desarrollado criterio propio sólido a lo largo del tiempo.',
       'Opera con convicción sin necesitar validación externa.',

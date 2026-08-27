@@ -35,19 +35,6 @@ export function buildResultImageNode(
   archetype: Archetype,
   capacity: Capacity,
 ): HTMLDivElement {
-  const portfolioRows = capacity.portfolio
-    .map((slice) => {
-      const width = Math.min(Math.round(slice.value * 1.8), 100)
-      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div style="flex:1;font-size:13px;color:${COL.body};font-family:system-ui,sans-serif">${slice.assetClass}</div>
-      <div style="flex:0 0 130px;height:6px;background:${COL.border};border-radius:3px;overflow:hidden">
-        <div style="width:${width}%;height:100%;background:${slice.color};border-radius:3px"></div>
-      </div>
-      <div style="flex:0 0 52px;text-align:right;font-size:12px;font-weight:700;color:${COL.prof};font-family:system-ui,sans-serif">${slice.range}</div>
-    </div>`
-    })
-    .join('')
-
   const strengths = bulletList(archetype.strengths, COL.verde)
   const blindSpots = bulletList(archetype.blindSpots, BLIND_SPOT_BULLET)
 
@@ -76,10 +63,6 @@ export function buildResultImageNode(
         <div style="font-size:15px;font-weight:700;color:${COL.blanco};margin-bottom:4px;font-family:system-ui,sans-serif">${capacity.label}</div>
         <div style="font-size:12px;color:${COL.gris};line-height:1.5;font-family:system-ui,sans-serif">${capacity.description}</div>
       </div>
-    </div>
-    <div style="border:1.5px solid ${COL.border};border-radius:14px;padding:18px 22px;margin-bottom:14px">
-      <div style="font-size:10px;font-weight:700;color:${COL.prof};letter-spacing:0.06em;text-transform:uppercase;margin-bottom:14px;font-family:system-ui,sans-serif">Portafolio recomendado</div>
-      ${portfolioRows}
     </div>
     <div style="text-align:center;font-size:11px;color:${COL.gris};font-family:system-ui,sans-serif;letter-spacing:0.05em">sabbi.com</div>
   `

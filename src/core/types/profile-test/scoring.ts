@@ -1,3 +1,5 @@
+import type { Answers } from './answers'
+
 export interface ArchetypeScores {
   experienceScore: number
   involvementScore: number
@@ -53,7 +55,12 @@ export type ArchetypeId =
 export interface ArchetypeRule {
   id: ArchetypeId
   description: string
-  matches: (scores: ArchetypeScores) => boolean
+  /**
+   * Las reglas leen puntajes; las de Estepario leen además respuestas puntuales
+   * (Q7, Q12, Q30, Q31), porque el documento las define por opción elegida y no
+   * por tramo de score.
+   */
+  matches: (scores: ArchetypeScores, answers: Answers) => boolean
 }
 
 export interface ResolvedArchetype {
@@ -64,7 +71,17 @@ export interface ResolvedArchetype {
 
 export type ExperienceLevel = 'basica' | 'media' | 'alta' | 'experta'
 export type InvolvementLevel = 'bajo' | 'medio' | 'alto' | 'maximo'
-export type RiskLevel = 'conservador' | 'moderado' | 'dinamico' | 'audaz'
+/**
+ * Cinco tramos, con los mismos nombres que usa Capacidad (en pantalla se
+ * escriben con «&», p. ej. «Conservador & Moderado»). Estos valores son claves
+ * internas; reemplazan la escala de cuatro (`dinamico`/`audaz`).
+ */
+export type RiskLevel =
+  | 'conservador'
+  | 'conservador-moderado'
+  | 'moderado'
+  | 'moderado-arriesgado'
+  | 'arriesgado'
 export type TrustLevel = 'baja' | 'media' | 'alta' | 'muy-alta'
 export type CollaborationLevel = 'baja' | 'media' | 'alta' | 'maxima'
 export type FlowPreferenceLevel = 'baja' | 'alta'

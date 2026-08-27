@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { QuestionOption, ScoreState } from '@/core'
+import type { Answers, QuestionOption, ScoreState } from '@/core'
 import { INITIAL_SCORES } from '@/features/profile-test/constants/scoring'
 import {
   applyScore,
@@ -12,6 +12,7 @@ import {
   resolveCapacityTier,
   resolveCapacity,
   ARCHETYPE_RULES,
+  isAutonomousProfile,
   resolveArchetype,
   resolveCombinationFit,
   deriveLevels,
@@ -23,6 +24,16 @@ import {
 function scores(partial: Partial<ScoreState> = {}): ScoreState {
   return { ...INITIAL_SCORES, ...partial }
 }
+
+/**
+ * Las cuatro respuestas que marcan autonomía: decide solo (Q7), no quiere
+ * comunidad (Q12), no delegaría (Q30) y nunca delegó (Q31). Son la condición
+ * de Estepario desde que la regla dejó de mirar puntajes.
+ */
+const AUTONOMOUS: Answers = { Q7: 2, Q12: 0, Q30: 0, Q31: 0 }
+
+/** Sin respuestas no hay autonomía: el caso por defecto de todas las demás reglas. */
+const NOT_AUTONOMOUS: Answers = {}
 
 describe('INITIAL_SCORES', () => {
   it('starts investable wealth at 1 and everything else at 0 (verbatim S.sc)', () => {
@@ -255,22 +266,10 @@ describe('resolveArchetype — ordered rule table', () => {
   })
 
   it.each([
-    [
-      'A12P',
-      scores({
-        experienceScore: 5,
-        involvementScore: 10,
-        collaborationMarker: 0,
-      }),
-    ],
-    [
-      'A12S',
-      scores({
-        experienceScore: 8,
-        involvementScore: 10,
-        collaborationMarker: 0,
-      }),
-    ],
+    // Estepario: la regla ya no mira I ni COLAB, solo la experiencia y las
+    // cuatro respuestas de autonomía.
+    ['A12P', scores({ experienceScore: 5 }), AUTONOMOUS],
+    ['A12S', scores({ experienceScore: 8 }), AUTONOMOUS],
     [
       'A11',
       scores({
@@ -278,6 +277,7 @@ describe('resolveArchetype — ordered rule table', () => {
         involvementScore: 17,
         collaborationMarker: 4,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A10',
@@ -287,6 +287,7 @@ describe('resolveArchetype — ordered rule table', () => {
         riskScore: 21,
         collaborationMarker: 4,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A9',
@@ -296,6 +297,7 @@ describe('resolveArchetype — ordered rule table', () => {
         riskScore: 16,
         collaborationMarker: 4,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A8',
@@ -305,6 +307,7 @@ describe('resolveArchetype — ordered rule table', () => {
         riskScore: 10,
         collaborationMarker: 4,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A7',
@@ -314,6 +317,7 @@ describe('resolveArchetype — ordered rule table', () => {
         flowPreferenceScore: 3,
         collaborationMarker: 4,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A6',
@@ -323,6 +327,7 @@ describe('resolveArchetype — ordered rule table', () => {
         flowPreferenceScore: 0,
         collaborationMarker: 4,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A5',
@@ -331,6 +336,7 @@ describe('resolveArchetype — ordered rule table', () => {
         involvementScore: 9,
         collaborationMarker: 0,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A4',
@@ -340,6 +346,7 @@ describe('resolveArchetype — ordered rule table', () => {
         riskScore: 16,
         collaborationMarker: 4,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A3',
@@ -348,6 +355,7 @@ describe('resolveArchetype — ordered rule table', () => {
         involvementScore: 10,
         collaborationMarker: 4,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A1',
@@ -357,6 +365,7 @@ describe('resolveArchetype — ordered rule table', () => {
         flowPreferenceScore: 3,
         collaborationMarker: 0,
       }),
+      NOT_AUTONOMOUS,
     ],
     [
       'A2',
@@ -367,9 +376,10 @@ describe('resolveArchetype — ordered rule table', () => {
         riskScore: 10,
         collaborationMarker: 0,
       }),
+      NOT_AUTONOMOUS,
     ],
-  ])('resolves %s', (expected, sc) => {
-    expect(resolveArchetype(sc).id).toBe(expected)
+  ])('resolves %s', (expected, sc, answers) => {
+    expect(resolveArchetype(sc, answers).id).toBe(expected)
   })
 
   it('A10 via the sophistication ≥ 3 branch (crypto/alts count)', () => {
@@ -382,6 +392,7 @@ describe('resolveArchetype — ordered rule table', () => {
           sophisticationMarker: 3,
           collaborationMarker: 4,
         }),
+        NOT_AUTONOMOUS,
       ).id,
     ).toBe('A10')
   })
@@ -397,18 +408,33 @@ describe('resolveArchetype — ordered rule table', () => {
           age56PlusMarker: 1,
           collaborationMarker: 0,
         }),
+        NOT_AUTONOMOUS,
       ).id,
     ).toBe('A1')
   })
 
-  it('collaboration boundary splits A12S (≤3) from A3/A11 (≥4) at the same experience/involvement', () => {
-    const base = { experienceScore: 5, involvementScore: 10 }
+  it('experience boundary splits A12P (≤7.5) from A12S (≥7.6) con las mismas respuestas', () => {
     expect(
-      resolveArchetype(scores({ ...base, collaborationMarker: 3 })).id,
+      resolveArchetype(scores({ experienceScore: 7.5 }), AUTONOMOUS).id,
     ).toBe('A12P')
     expect(
-      resolveArchetype(scores({ ...base, collaborationMarker: 4 })).id,
-    ).toBe('A3')
+      resolveArchetype(scores({ experienceScore: 7.6 }), AUTONOMOUS).id,
+    ).toBe('A12S')
+  })
+
+  it('Estepario exige las cuatro respuestas: basta que falle una para no serlo', () => {
+    const sc = scores({ experienceScore: 14, involvementScore: 14 })
+    expect(resolveArchetype(sc, AUTONOMOUS).id).toBe('A12S')
+    // Q7 delegando, Q12 con interés en comunidad, Q30 cómodo delegando y Q31
+    // habiendo delegado antes: cada una por separado rompe la regla.
+    for (const broken of [
+      { ...AUTONOMOUS, Q7: 1 },
+      { ...AUTONOMOUS, Q12: 2 },
+      { ...AUTONOMOUS, Q30: 1 },
+      { ...AUTONOMOUS, Q31: 4 },
+    ]) {
+      expect(resolveArchetype(sc, broken).id).not.toBe('A12S')
+    }
   })
 
   it('flow-preference boundary splits A7 (≥3) from A6 (<3)', () => {
@@ -418,10 +444,16 @@ describe('resolveArchetype — ordered rule table', () => {
       collaborationMarker: 4,
     }
     expect(
-      resolveArchetype(scores({ ...base, flowPreferenceScore: 3 })).id,
+      resolveArchetype(
+        scores({ ...base, flowPreferenceScore: 3 }),
+        NOT_AUTONOMOUS,
+      ).id,
     ).toBe('A7')
     expect(
-      resolveArchetype(scores({ ...base, flowPreferenceScore: 2 })).id,
+      resolveArchetype(
+        scores({ ...base, flowPreferenceScore: 2 }),
+        NOT_AUTONOMOUS,
+      ).id,
     ).toBe('A6')
   })
 })
@@ -436,6 +468,7 @@ describe('resolveArchetype — A2 rule vs technical fallback', () => {
         riskScore: 10,
         collaborationMarker: 0,
       }),
+      NOT_AUTONOMOUS,
     )
     expect(resolved).toEqual({
       id: 'A2',
@@ -448,6 +481,7 @@ describe('resolveArchetype — A2 rule vs technical fallback', () => {
     // experience 8 (>7.5, ≤11) with involvement 5 (≤9) matches no rule.
     const resolved = resolveArchetype(
       scores({ experienceScore: 8, involvementScore: 5 }),
+      NOT_AUTONOMOUS,
     )
     expect(resolved).toEqual({
       id: 'A2',
@@ -460,6 +494,7 @@ describe('resolveArchetype — A2 rule vs technical fallback', () => {
     // experience 14 (≥13.6) with involvement 5 (≤9) matches no rule.
     const resolved = resolveArchetype(
       scores({ experienceScore: 14, involvementScore: 5 }),
+      NOT_AUTONOMOUS,
     )
     expect(resolved).toEqual({
       id: 'A2',
@@ -467,6 +502,54 @@ describe('resolveArchetype — A2 rule vs technical fallback', () => {
       isFallback: true,
     })
   })
+})
+
+describe('isAutonomousProfile — las cuatro condiciones de Estepario', () => {
+  it('acepta las dos opciones de Q12 que no quieren comunidad', () => {
+    expect(isAutonomousProfile({ ...AUTONOMOUS, Q12: 0 })).toBe(true)
+    expect(isAutonomousProfile({ ...AUTONOMOUS, Q12: 1 })).toBe(true)
+    expect(isAutonomousProfile({ ...AUTONOMOUS, Q12: 2 })).toBe(false)
+  })
+
+  it('pide respuesta en las cuatro preguntas: sin contestar no alcanza', () => {
+    expect(isAutonomousProfile({})).toBe(false)
+    expect(isAutonomousProfile({ Q7: 2, Q30: 0, Q31: 0 })).toBe(false)
+  })
+})
+
+describe('resolveArchetype — el hueco que dejó la regla nueva de Estepario', () => {
+  // La regla vieja (I > 9 AND COLAB ≤ 3) atrapaba a todo el perfil autónomo y
+  // poco colaborativo. La nueva es más angosta y nadie ocupa ese lugar: A3 pide
+  // COLAB ≥ 4 y A1/A2 piden I ≤ 9. Estos casos fijan el comportamiento para
+  // poder medirlo — no es un acierto del sistema, es un riesgo abierto (P1).
+  it.each([
+    ['baja experiencia', scores({ experienceScore: 5, involvementScore: 10 })],
+    [
+      'experiencia media sin apetito de riesgo',
+      scores({ experienceScore: 8, involvementScore: 10, riskScore: 10 }),
+    ],
+    [
+      'experiencia alta sin preferencia por flujos',
+      scores({
+        experienceScore: 12,
+        involvementScore: 10,
+        flowPreferenceScore: 0,
+      }),
+    ],
+    [
+      'experto con involucramiento máximo',
+      scores({ experienceScore: 14, involvementScore: 17, riskScore: 10 }),
+    ],
+  ])(
+    'un perfil poco colaborativo (%s) que no cumple las 4 respuestas cae al fallback',
+    (_caso, sc) => {
+      expect(resolveArchetype(sc, NOT_AUTONOMOUS)).toEqual({
+        id: 'A2',
+        matchedRuleId: null,
+        isFallback: true,
+      })
+    },
+  )
 })
 
 describe('deriveLevels', () => {
@@ -485,7 +568,7 @@ describe('deriveLevels', () => {
     ).toEqual({
       experience: 'experta',
       involvement: 'maximo',
-      risk: 'audaz',
+      risk: 'moderado-arriesgado',
       trust: 'alta',
       collaboration: 'alta',
       flowPreference: 'alta',
@@ -501,6 +584,28 @@ describe('deriveLevels', () => {
       collaboration: 'baja',
       flowPreference: 'baja',
     })
+  })
+
+  it('risk bands: cinco tramos con los nombres de Capacidad (7/12/16/21)', () => {
+    // Los umbrales de las REGLAS de arquetipo siguen en la escala vieja (9, 15,
+    // 16, 20, 21) — el documento los dejó intactos a propósito. Estas bandas
+    // son solo lectura, y por eso se desalinean en los bordes (P5).
+    expect(deriveLevels(scores({ riskScore: 7 })).risk).toBe('conservador')
+    expect(deriveLevels(scores({ riskScore: 8 })).risk).toBe(
+      'conservador-moderado',
+    )
+    expect(deriveLevels(scores({ riskScore: 12 })).risk).toBe(
+      'conservador-moderado',
+    )
+    expect(deriveLevels(scores({ riskScore: 13 })).risk).toBe('moderado')
+    expect(deriveLevels(scores({ riskScore: 16 })).risk).toBe('moderado')
+    expect(deriveLevels(scores({ riskScore: 17 })).risk).toBe(
+      'moderado-arriesgado',
+    )
+    expect(deriveLevels(scores({ riskScore: 21 })).risk).toBe(
+      'moderado-arriesgado',
+    )
+    expect(deriveLevels(scores({ riskScore: 22 })).risk).toBe('arriesgado')
   })
 
   it('trust band per the context document: alta is 11–14, muy-alta starts at 15', () => {
@@ -534,6 +639,7 @@ describe('resolveInvestorProfile', () => {
         riskScore: 10,
         financialCapacityScore: 10,
       }),
+      NOT_AUTONOMOUS,
     )
     expect(profile.archetype).toBe('A2')
     expect(profile.capacity).toBe('C3')
@@ -548,6 +654,7 @@ describe('resolveInvestorProfile', () => {
     expect(
       resolveResult(
         scores({ experienceScore: 5, involvementScore: 5, riskScore: 10 }),
+        NOT_AUTONOMOUS,
       ),
     ).toEqual({
       archetype: 'A2',

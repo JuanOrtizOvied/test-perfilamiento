@@ -92,7 +92,10 @@ function makeError(
 
 /** Move to the result, computing + storing the archetype/capacity. */
 function toResult(state: TestState): TestState {
-  const { archetype, capacity } = resolveInvestorProfile(state.scores)
+  const { archetype, capacity } = resolveInvestorProfile(
+    state.scores,
+    state.resp,
+  )
   return { ...state, result: true, lastArq: archetype, lastCap: capacity }
 }
 

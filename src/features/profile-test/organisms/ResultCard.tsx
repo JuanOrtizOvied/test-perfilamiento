@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Chip } from '@/packages/design/atoms/chip'
 import { Card, CardContent, CardTitle } from '@/packages/design/ui/card'
 import { cn } from '@/packages/lib/utils'
-import { PortfolioRow } from '@/features/profile-test/molecules/PortfolioRow'
 import {
   TestActionBar,
   type TestActionBarProps,
@@ -76,7 +75,7 @@ function BulletCard({
   )
 }
 
-/** Result view: archetype hero, strengths/blind spots, capacity and portfolio. */
+/** Result view: archetype hero, strengths/blind spots and capacity. */
 export function ResultCard({
   archetype,
   capacity,
@@ -134,15 +133,6 @@ export function ResultCard({
             {capacity.description}
           </p>
         </CardContent>
-      </Card>
-
-      <Card className="mb-3.5 px-[22px] py-[18px]">
-        <CardTitle asChild variant="eyebrow" className="mb-3 text-sabbi-verde">
-          <h4>{result.portfolioHeading}</h4>
-        </CardTitle>
-        {capacity.portfolio.map((slice, index) => (
-          <PortfolioRow key={index} slice={slice} />
-        ))}
       </Card>
 
       {onShowRecommendations ? (

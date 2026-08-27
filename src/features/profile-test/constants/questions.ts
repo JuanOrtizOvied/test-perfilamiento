@@ -52,10 +52,10 @@ export const QUESTIONS: readonly Question[] = [
         // 4), así que el salto ya está pre-otorgando ese tramo.
         skipQ2Answer: 4,
       },
-      { label: 'Planificar tus ahorros para jubilarte' },
+      { label: 'Planificar tu jubilación' },
       {
         label:
-          'Prepararte para un objetivo específico (comprar un departamento, educación de tus hijos u otro proyecto importante)',
+          'Prepararte para un objetivo específico (comprar un departamento, la educación de tus hijos u otro proyecto importante)',
       },
     ],
   },
@@ -295,7 +295,7 @@ export const QUESTIONS: readonly Question[] = [
     bloque: 'Involucramiento',
     tipo: 'single',
     texto:
-      '¿Qué tan valioso sería para ti aprender o contrastar ideas con otros inversionistas?',
+      'Además de recibir asesoría, ¿qué tan valioso sería para ti aprender o contrastar ideas con otros inversionistas?',
     opts: [
       {
         label: 'No te interesa, prefieres invertir de forma privada',
@@ -325,14 +325,35 @@ export const QUESTIONS: readonly Question[] = [
     tipo: 'single',
     texto:
       'En comparación con otras personas, ¿cómo calificas tu disposición a asumir riesgos financieros?',
+    // Etiquetas con una frase de contexto y extremos suavizados: el 58% de las
+    // respuestas históricas caía en "Alta" y nadie elegía los extremos, lo que
+    // comprimía el rango real de R_score. Los puntajes 1–7 no se tocan.
     opts: [
-      { label: 'Extremadamente baja', riskPoints: 1 },
-      { label: 'Muy baja', riskPoints: 2 },
-      { label: 'Baja', riskPoints: 3 },
-      { label: 'Media', riskPoints: 4 },
-      { label: 'Alta', riskPoints: 5 },
-      { label: 'Muy alta', riskPoints: 6 },
-      { label: 'Extremadamente alta', riskPoints: 7 },
+      { label: 'Mínimo — no quieres asumir ningún riesgo', riskPoints: 1 },
+      { label: 'Muy bajo — asumes muy poco riesgo', riskPoints: 2 },
+      {
+        label:
+          'Bajo — prefieres opciones conservadoras, aunque aceptas algo de riesgo controlado',
+        riskPoints: 3,
+      },
+      {
+        label: 'Medio — buscas un equilibrio entre seguridad y crecimiento',
+        riskPoints: 4,
+      },
+      {
+        label: 'Alto — aceptas riesgo con tal de mejorar tus retornos',
+        riskPoints: 5,
+      },
+      {
+        label:
+          'Muy alto — priorizas el crecimiento, aunque implique bastante volatilidad',
+        riskPoints: 6,
+      },
+      {
+        label:
+          'Máximo — buscas el mayor retorno posible, sin problema en asumir riesgo alto',
+        riskPoints: 7,
+      },
     ],
   },
   {
@@ -340,7 +361,7 @@ export const QUESTIONS: readonly Question[] = [
     bloque: 'Riesgo',
     tipo: 'single',
     texto:
-      'Imagina que invertiste US$100,000 y el valor baja temporalmente. ¿Cuánto tendría que bajar para que te sientas incómodo?',
+      'Imagina que invertiste US$100,000 y sucede algo que hace que el valor baje temporalmente. ¿Cuánto tendría que bajar el valor de tus inversiones para que te sientas incómodo?',
     opts: [
       { label: 'Cualquier caída te haría sentir incómodo/a', riskPoints: 1 },
       { label: 'Máximo 5%', riskPoints: 2 },
@@ -355,14 +376,39 @@ export const QUESTIONS: readonly Question[] = [
     id: 'Q15',
     bloque: 'Riesgo',
     tipo: 'single',
-    texto:
-      'Actualmente, ¿cuánto riesgo estás dispuesto a asumir en tus inversiones?',
+    // "En posibilidad de asumir", no "dispuesto a asumir": Q13 mide la
+    // tolerancia general y esta la situación de hoy. Antes eran casi la misma
+    // pregunta en dos redacciones. Puntajes y marcador A10 sin cambios.
+    texto: 'Actualmente, ¿cuánto riesgo estás en posibilidad de asumir?',
     opts: [
-      { label: 'Muy bajo', riskPoints: 0 },
-      { label: 'Bajo', riskPoints: 1 },
-      { label: 'Medio', riskPoints: 3 },
-      { label: 'Alto', riskPoints: 4 },
-      { label: 'Muy alto', riskPoints: 5, sophisticationPoints: 1 },
+      {
+        label: 'Muy bajo — no puedes asumir nada de riesgo en este momento',
+        recallLabel: 'muy bajo',
+        riskPoints: 0,
+      },
+      {
+        label: 'Bajo — puedes asumir muy poco riesgo dada tu situación actual',
+        recallLabel: 'bajo',
+        riskPoints: 1,
+      },
+      {
+        label:
+          'Medio — puedes asumir un riesgo moderado sin comprometer tu estabilidad',
+        recallLabel: 'medio',
+        riskPoints: 3,
+      },
+      {
+        label: 'Alto — tu situación actual te permite asumir bastante riesgo',
+        recallLabel: 'alto',
+        riskPoints: 4,
+      },
+      {
+        label:
+          'Muy alto — tu situación actual te permite asumir un riesgo alto sin mayor problema',
+        recallLabel: 'muy alto',
+        riskPoints: 5,
+        sophisticationPoints: 1,
+      },
     ],
   },
   {
@@ -421,17 +467,28 @@ export const QUESTIONS: readonly Question[] = [
     bloque: 'Flujos',
     tipo: 'single',
     texto:
-      '¿Cuánto necesitarías recibir aproximadamente al mes de tus inversiones?',
+      'Si quisieras recibir ingresos mensuales de tus inversiones, ¿cuánto necesitarías recibir aproximadamente al mes?',
+    // El verbo vive en la etiqueta, no en el conector de la pantalla 4: ahí la
+    // frase es "… y {opción} de tus inversiones".
     opts: [
+      { label: 'No necesitas ingresos mensuales', monthlyIncomeNeedLevel: 0 },
+      { label: 'Necesitas menos de US$500 al mes', monthlyIncomeNeedLevel: 1 },
       {
-        label: 'No necesitas ingresos mensuales de tus inversiones',
-        monthlyIncomeNeedLevel: 0,
+        label: 'Necesitas entre US$500 y US$1,000 al mes',
+        monthlyIncomeNeedLevel: 2,
       },
-      { label: 'Menos de US$500 al mes', monthlyIncomeNeedLevel: 1 },
-      { label: 'Entre US$500 y US$1,000 al mes', monthlyIncomeNeedLevel: 2 },
-      { label: 'Entre US$1,001 y US$2,000 al mes', monthlyIncomeNeedLevel: 3 },
-      { label: 'Entre US$2,001 y US$5,000 al mes', monthlyIncomeNeedLevel: 4 },
-      { label: 'Más de US$5,000 al mes', monthlyIncomeNeedLevel: 5 },
+      {
+        label: 'Necesitas entre US$1,001 y US$2,000 al mes',
+        monthlyIncomeNeedLevel: 3,
+      },
+      {
+        label: 'Necesitas entre US$2,001 y US$5,000 al mes',
+        monthlyIncomeNeedLevel: 4,
+      },
+      {
+        label: 'Necesitas más de US$5,000 al mes',
+        monthlyIncomeNeedLevel: 5,
+      },
     ],
   },
   {
@@ -482,7 +539,7 @@ export const QUESTIONS: readonly Question[] = [
     id: 'Q22',
     bloque: 'Capacidad financiera',
     tipo: 'single',
-    texto: '¿Alguien más depende económicamente de ti?',
+    texto: 'Además de tus hijos, ¿alguien más depende económicamente de ti?',
     opts: [
       { label: 'Nadie más', financialCapacityPoints: 0 },
       { label: 'Sí, 1 persona', financialCapacityPoints: -2 },
@@ -525,7 +582,8 @@ export const QUESTIONS: readonly Question[] = [
     tipo: 'single',
     ayuda:
       'No consideres la hipoteca de tu vivienda principal si puedes pagarla cómodamente con tus ingresos actuales.',
-    texto: '¿Cuál es el monto total de tus deudas financieras?',
+    texto:
+      'Aproximadamente, ¿cuál es el monto total de tus deudas financieras?',
     opts: [
       { label: 'No tienes deudas', debtLevel: 0 },
       { label: 'Menos de US$25,000', debtLevel: 1 },

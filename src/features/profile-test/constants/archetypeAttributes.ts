@@ -20,7 +20,7 @@ export const ARCHETYPE_ATTRIBUTES: Readonly<
   A2: {
     expertise: 'Bajo',
     involvement: 'Bajo',
-    riskTolerance: 'Moderado',
+    riskTolerance: 'Conservador & Moderado',
     collaboration: 'Indiferente',
     flows: 'Variable',
   },
@@ -34,7 +34,7 @@ export const ARCHETYPE_ATTRIBUTES: Readonly<
   A4: {
     expertise: 'Medio',
     involvement: 'Alto',
-    riskTolerance: 'Dinámico',
+    riskTolerance: 'Moderado & Arriesgado',
     collaboration: 'Alto',
     flows: 'Variable',
   },
@@ -69,21 +69,21 @@ export const ARCHETYPE_ATTRIBUTES: Readonly<
   A9: {
     expertise: 'Experto',
     involvement: 'Medio',
-    riskTolerance: 'Dinámico',
+    riskTolerance: 'Moderado & Arriesgado',
     collaboration: 'Medio',
     flows: 'Variable',
   },
   A10: {
     expertise: 'Experto',
     involvement: 'Alto',
-    riskTolerance: 'Audaz',
+    riskTolerance: 'Arriesgado',
     collaboration: 'Alto',
     flows: 'Bajo',
   },
   A11: {
     expertise: 'Experto',
     involvement: 'Alto',
-    riskTolerance: 'Dinámico',
+    riskTolerance: 'Moderado & Arriesgado',
     collaboration: 'Máximo',
     flows: 'Variable',
   },
