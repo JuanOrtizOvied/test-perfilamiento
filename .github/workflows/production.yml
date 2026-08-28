@@ -36,6 +36,7 @@ jobs:
           VITE_API_URL: https://api.sabbi.com
           VITE_PROFILE_TEST_WEBHOOK_URL: ${{ secrets.VITE_PROFILE_TEST_WEBHOOK_URL }}
           VITE_PROFILE_TEST_EXCEL_WEBHOOK_URL: ${{ secrets.VITE_PROFILE_TEST_EXCEL_WEBHOOK_URL }}
+          VITE_PROFILE_TEST_ZAPIER_WEBHOOK_URL: ${{ secrets.VITE_PROFILE_TEST_ZAPIER_WEBHOOK_URL }}
 
       - name: Deploy On ${{ vars.DOMAIN }}
         run: |

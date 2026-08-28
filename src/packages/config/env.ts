@@ -6,6 +6,7 @@ const envSchema = z.object({
   VITE_GA_ID: z.string().default(''),
   VITE_PROFILE_TEST_WEBHOOK_URL: z.string().default(''),
   VITE_PROFILE_TEST_EXCEL_WEBHOOK_URL: z.string().default(''),
+  VITE_PROFILE_TEST_ZAPIER_WEBHOOK_URL: z.string().default(''),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
@@ -23,4 +24,5 @@ export const env = {
   gaId: parsed.data.VITE_GA_ID,
   profileTestWebhookUrl: parsed.data.VITE_PROFILE_TEST_WEBHOOK_URL,
   profileTestExcelWebhookUrl: parsed.data.VITE_PROFILE_TEST_EXCEL_WEBHOOK_URL,
+  profileTestZapierWebhookUrl: parsed.data.VITE_PROFILE_TEST_ZAPIER_WEBHOOK_URL,
 } as const

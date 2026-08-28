@@ -2,12 +2,15 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   submitResult,
   submitResultToExcel,
+  submitResultToZapier,
 } from '@/features/profile-test/api/submitResult'
 import { buildProgressPayload } from '@/features/profile-test/api/submitProgress'
 import { createInitialState } from '@/features/profile-test/hooks/profileTestReducer'
+import { ARCHETYPES } from '@/features/profile-test/constants/archetypes'
 import {
   PROFILE_TEST_WEBHOOK_URL,
   PROFILE_TEST_EXCEL_WEBHOOK_URL,
+  PROFILE_TEST_ZAPIER_WEBHOOK_URL,
 } from '@tests/msw/handlers'
 import type { ProgressPayload, TestState } from '@/core'
 
@@ -149,5 +152,56 @@ describe('submitResultToExcel', () => {
       headers: { 'Content-Type': 'application/json' },
     })
     expect(spy.mock.calls[1][1]!.body).toBe(spy.mock.calls[0][1]!.body)
+  })
+})
+
+/**
+ * El webhook de Zapier NO recibe el snapshot: manda una fila plana cuyas claves
+ * son las columnas de la tabla del Zap, con los datos personales ya extraídos
+ * del bloque `personal` y el resultado aplanado. Mismas guardas de URL.
+ */
+describe('submitResultToZapier', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('skips the request when no webhook URL is configured', () => {
+    const spy = vi.spyOn(globalThis, 'fetch')
+    submitResultToZapier(payload, '')
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('skips the request for a TU_URL placeholder', () => {
+    const spy = vi.spyOn(globalThis, 'fetch')
+    submitResultToZapier(payload, 'https://example.com/TU_URL')
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('posts the flat row with the Zap table column names', () => {
+    const spy = vi.spyOn(globalThis, 'fetch')
+    submitResultToZapier(payload, PROFILE_TEST_ZAPIER_WEBHOOK_URL)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy.mock.calls[0][0]).toBe(PROFILE_TEST_ZAPIER_WEBHOOK_URL)
+    expect(spy.mock.calls[0][1]).toMatchObject({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const row = JSON.parse(spy.mock.calls[0][1]!.body as string) as Record<
+      string,
+      string
+    >
+    const guardian = ARCHETYPES.A1
+    expect(row).toEqual({
+      Nombre: 'Ana Pérez',
+      Correo: 'ana@correo.com',
+      Arquetipo: 'El Guardián',
+      Tier: 'Seguidores',
+      Capacidad: 'Conservador',
+      'Descripción corta': guardian.description,
+      'Fortaleza 1': guardian.strengths[0],
+      'Fortaleza 2': guardian.strengths[1],
+      'Punto ciego 1': guardian.blindSpots[0],
+      'Punto ciego 2': guardian.blindSpots[1],
+    })
   })
 })

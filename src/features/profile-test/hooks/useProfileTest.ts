@@ -24,6 +24,7 @@ import { buildProgressPayload } from '@/features/profile-test/api/submitProgress
 import {
   submitResult,
   submitResultToExcel,
+  submitResultToZapier,
 } from '@/features/profile-test/api/submitResult'
 import {
   reducer,
@@ -43,9 +44,10 @@ export function useProfileTest(): UseProfileTest {
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Submit the result once, on the transition into the result view. Covers both
-  // original call sites (dismissInterm(33) and the final advance). Va el mismo
-  // snapshot que recibe el backend propio, ya en estado `completed`, a los dos
-  // webhooks: el del resultado y el que vuelca las preguntas a un Excel.
+  // original call sites (dismissInterm(33) and the final advance). El del
+  // resultado y el del Excel reciben el mismo snapshot que el backend propio, ya
+  // en estado `completed`; el de Zapier deriva de ese snapshot la fila plana
+  // que consume su tabla.
   useEffect(() => {
     if (state.result && !submittedRef.current) {
       submittedRef.current = true
@@ -53,6 +55,7 @@ export function useProfileTest(): UseProfileTest {
         const payload = buildProgressPayload(state)
         submitResult(payload)
         submitResultToExcel(payload)
+        submitResultToZapier(payload)
       }
     }
     if (!state.result) submittedRef.current = false

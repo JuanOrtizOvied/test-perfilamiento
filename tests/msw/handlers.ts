@@ -9,6 +9,10 @@ export const PROFILE_TEST_WEBHOOK_URL = 'https://webhook.test/profile-sabbi'
 export const PROFILE_TEST_EXCEL_WEBHOOK_URL =
   'https://webhook.test/profile-sabbi-excel'
 
+/** Tercer destino, cuerpo propio: el Zap que llena la tabla de resultados. */
+export const PROFILE_TEST_ZAPIER_WEBHOOK_URL =
+  'https://webhook.test/profile-sabbi-zapier'
+
 export const handlers = [
   http.post(
     PROFILE_TEST_WEBHOOK_URL,
@@ -16,6 +20,10 @@ export const handlers = [
   ),
   http.post(
     PROFILE_TEST_EXCEL_WEBHOOK_URL,
+    async () => new HttpResponse(null, { status: 200 }),
+  ),
+  http.post(
+    PROFILE_TEST_ZAPIER_WEBHOOK_URL,
     async () => new HttpResponse(null, { status: 200 }),
   ),
 ]

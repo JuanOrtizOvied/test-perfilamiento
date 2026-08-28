@@ -38,6 +38,7 @@ jobs:
           VITE_API_URL: https://staging-api.sabbi.com
           VITE_PROFILE_TEST_WEBHOOK_URL: ${{ secrets.STG_VITE_PROFILE_TEST_WEBHOOK_URL }}
           VITE_PROFILE_TEST_EXCEL_WEBHOOK_URL: ${{ secrets.STG_VITE_PROFILE_TEST_EXCEL_WEBHOOK_URL }}
+          VITE_PROFILE_TEST_ZAPIER_WEBHOOK_URL: ${{ secrets.STG_VITE_PROFILE_TEST_ZAPIER_WEBHOOK_URL }}
 
       - name: Deploy On ${{ vars.DOMAIN }}
         run: aws s3 sync dist/ s3://${{ env.DOMAIN_NAME }}
