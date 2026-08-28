@@ -19,6 +19,12 @@
  * preflight `OPTIONS`, porque el `Content-Type: application/json` está fuera de
  * la lista segura. Si el receptor no está configurado así, el navegador bloquea
  * el envío.
+ *
+ * La EXCEPCIÓN es Zapier: su hook no responde `Access-Control-Allow-Headers` en
+ * el `OPTIONS` (y encima registra ese `OPTIONS` como un intento con cuerpo
+ * vacío), así que su envío va SIN `Content-Type` — petición "simple", sin
+ * preflight. El Catch Hook parsea el JSON del body por contenido, no por el
+ * header, así que los campos llegan igual.
  */
 import { env } from '@/packages/config/env'
 import type { ProgressPayload } from '@/core'
@@ -28,6 +34,20 @@ function post(url: string, payload: unknown): void {
   void fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {})
+}
+
+/**
+ * Variante sin `Content-Type`: al no llevar headers fuera de la lista segura el
+ * navegador la manda como petición simple (viaja como `text/plain`) y NO emite
+ * el preflight `OPTIONS`. Es el camino para receptores que no responden CORS,
+ * como Zapier.
+ */
+function postNoPreflight(url: string, payload: unknown): void {
+  if (!url || url.includes('TU_URL')) return
+  void fetch(url, {
+    method: 'POST',
     body: JSON.stringify(payload),
   }).catch(() => {})
 }
@@ -87,5 +107,5 @@ export function submitResultToZapier(
   payload: ProgressPayload,
   url: string = env.profileTestZapierWebhookUrl,
 ): void {
-  post(url, buildZapierRow(payload))
+  postNoPreflight(url, buildZapierRow(payload))
 }

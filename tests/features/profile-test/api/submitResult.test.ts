@@ -159,6 +159,10 @@ describe('submitResultToExcel', () => {
  * El webhook de Zapier NO recibe el snapshot: manda una fila plana cuyas claves
  * son las columnas de la tabla del Zap, con los datos personales ya extraídos
  * del bloque `personal` y el resultado aplanado. Mismas guardas de URL.
+ *
+ * Además va SIN `Content-Type`: Zapier no responde el preflight CORS (y
+ * registra el `OPTIONS` como intento vacío), así que el envío tiene que ser una
+ * petición simple. El Catch Hook parsea el JSON del body por contenido.
  */
 describe('submitResultToZapier', () => {
   afterEach(() => vi.restoreAllMocks())
@@ -175,16 +179,15 @@ describe('submitResultToZapier', () => {
     expect(spy).not.toHaveBeenCalled()
   })
 
-  it('posts the flat row with the Zap table column names', () => {
+  it('posts the flat row with the Zap table column names, without preflight', () => {
     const spy = vi.spyOn(globalThis, 'fetch')
     submitResultToZapier(payload, PROFILE_TEST_ZAPIER_WEBHOOK_URL)
 
     expect(spy).toHaveBeenCalledTimes(1)
     expect(spy.mock.calls[0][0]).toBe(PROFILE_TEST_ZAPIER_WEBHOOK_URL)
-    expect(spy.mock.calls[0][1]).toMatchObject({
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
+    expect(spy.mock.calls[0][1]).toMatchObject({ method: 'POST' })
+    // Sin `Content-Type: application/json`: es lo que evita el preflight CORS.
+    expect(spy.mock.calls[0][1]!.headers).toBeUndefined()
 
     const row = JSON.parse(spy.mock.calls[0][1]!.body as string) as Record<
       string,
